@@ -83,6 +83,7 @@ type
     Edit_ship_class_name: TEdit;
     ColorPanel1: TColorPanel;
     CheckBox_derelict: TCheckBox;
+    CheckBox_outside_view: TCheckBox;
     procedure Button1Click(Sender: TObject);
     procedure ComboBox_tilesChange(Sender: TObject);
     procedure PlotGrid1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -98,6 +99,7 @@ type
     procedure Button2Click(Sender: TObject);
     procedure ColorPanel1Change(Sender: TObject);
     procedure CheckBox_derelictChange(Sender: TObject);
+    procedure CheckBox_outside_viewChange(Sender: TObject);
   private
     { Private declarations }
   public
@@ -113,8 +115,7 @@ type
 var
   Form1: TForm1;
   fDown: TPointF;
-  painting_tiles: boolean;
-  derelict: boolean;
+  painting_tiles,outside_view,derelict: boolean;
   tiles: array of array of char;
   tilecount_x, tilecount_y: integer;
   previous_shipCode: string;
@@ -155,6 +156,11 @@ var buffer: TBitmap;
         TTT_Window:   tile_color:= TAlphaColorRec.Cyan;
         TTT_Airlock:  tile_color:= TAlphaColorRec.Gray;
       else tile_color:= ColorPanel1.Color;
+      end;
+
+      if outside_view then
+      case tile of
+        TTT_Floor,TTT_Airlock: tile_color:= ColorPanel1.Color;
       end;
 
       var FloorBrush:= TBrush.Create(TBrushKind.Solid, tile_color);
@@ -497,10 +503,17 @@ begin
   Redraw_ship_tiles;
 end;
 
+procedure TForm1.CheckBox_outside_viewChange(Sender: TObject);
+begin
+  outside_view:= CheckBox_outside_view.IsChecked;
+  Redraw_ship_tiles;
+end;
+
 procedure TForm1.ColorPanel1Change(Sender: TObject);
 begin
   var color := ColorPanel1.color;
   Edit_tile_color.Text := AlphaColorToString(color);
+  Redraw_ship_tiles;
 end;
 
 procedure TForm1.ComboBox_tilesChange(Sender: TObject);

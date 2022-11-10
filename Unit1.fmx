@@ -107,7 +107,7 @@ object Form1: TForm1
       Position.X = 5.000000000000000000
       Position.Y = 185.000000000000000000
       Size.Width = 214.000000000000000000
-      Size.Height = 332.000000000000000000
+      Size.Height = 352.000000000000000000
       Size.PlatformDefault = False
       Text = 'Tile painting'
       TabOrder = 1
@@ -166,11 +166,18 @@ object Form1: TForm1
         UseAlpha = False
         OnChange = ColorPanel1Change
       end
+      object CheckBox_outside_view: TCheckBox
+        Position.X = 16.000000000000000000
+        Position.Y = 324.000000000000000000
+        TabOrder = 4
+        Text = 'outside view'
+        OnChange = CheckBox_outside_viewChange
+      end
     end
     object GroupBox3: TGroupBox
       Align = Client
       Size.Width = 224.000000000000000000
-      Size.Height = 283.000000000000000000
+      Size.Height = 263.000000000000000000
       Size.PlatformDefault = False
       Text = 'Ship code'
       TabOrder = 2
@@ -185,11 +192,11 @@ object Form1: TForm1
         Margins.Right = 10.000000000000000000
         Margins.Bottom = 10.000000000000000000
         Size.Width = 204.000000000000000000
-        Size.Height = 253.000000000000000000
+        Size.Height = 233.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 3
         Viewport.Width = 200.000000000000000000
-        Viewport.Height = 249.000000000000000000
+        Viewport.Height = 229.000000000000000000
       end
     end
   end

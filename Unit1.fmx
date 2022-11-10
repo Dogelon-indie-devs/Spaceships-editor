@@ -1,22 +1,20 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = Single
-  Caption = 'Spaceships tile editor'
-  ClientHeight = 600
-  ClientWidth = 800
+  Caption = 'Spaceships tile editor v0.2.1'
+  ClientHeight = 800
+  ClientWidth = 1024
   Position = ScreenCenter
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
+  OnResize = FormResize
   DesignerMasterStyle = 0
   object Panel1: TPanel
-    Align = Right
-    Position.X = 600.000000000000000000
-    Size.Width = 200.000000000000000000
-    Size.Height = 600.000000000000000000
+    Align = Client
+    Size.Width = 224.000000000000000000
+    Size.Height = 800.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object GroupBox1: TGroupBox
@@ -26,8 +24,8 @@ object Form1: TForm1
       Margins.Right = 5.000000000000000000
       Position.X = 5.000000000000000000
       Position.Y = 5.000000000000000000
-      Size.Width = 190.000000000000000000
-      Size.Height = 120.000000000000000000
+      Size.Width = 214.000000000000000000
+      Size.Height = 180.000000000000000000
       Size.PlatformDefault = False
       Text = 'Grid generator'
       TabOrder = 0
@@ -75,12 +73,31 @@ object Form1: TForm1
         OnClick = Button_saveClick
       end
       object Button_load: TButton
-        Enabled = False
         Position.X = 102.000000000000000000
         Position.Y = 80.000000000000000000
         TabOrder = 41
         Text = 'Load'
         OnClick = Button_loadClick
+      end
+      object Edit_author: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        TabOrder = 44
+        Position.X = 18.000000000000000000
+        Position.Y = 110.000000000000000000
+        Size.Width = 164.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextPrompt = 'design author'
+      end
+      object Edit_ship_class_name: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        TabOrder = 43
+        Position.X = 18.000000000000000000
+        Position.Y = 140.000000000000000000
+        Size.Width = 164.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextPrompt = 'ship class name'
       end
     end
     object GroupBox2: TGroupBox
@@ -88,33 +105,32 @@ object Form1: TForm1
       Margins.Left = 5.000000000000000000
       Margins.Right = 5.000000000000000000
       Position.X = 5.000000000000000000
-      Position.Y = 125.000000000000000000
-      Size.Width = 190.000000000000000000
-      Size.Height = 200.000000000000000000
+      Position.Y = 185.000000000000000000
+      Size.Width = 214.000000000000000000
+      Size.Height = 332.000000000000000000
       Size.PlatformDefault = False
-      Text = 'Tile setting'
+      Text = 'Tile painting'
       TabOrder = 1
       object ComboBox_tiles: TComboBox
         Position.X = 16.000000000000000000
-        Position.Y = 74.000000000000000000
+        Position.Y = 49.000000000000000000
         Size.Width = 121.000000000000000000
         Size.Height = 22.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 38
         OnChange = ComboBox_tilesChange
       end
-      object CheckBox_walkable: TCheckBox
-        Enabled = False
-        Position.X = 16.000000000000000000
-        Position.Y = 49.000000000000000000
-        TabOrder = 39
-        Text = 'Walkable'
-      end
       object Label_last_tile: TLabel
         Position.X = 16.000000000000000000
         Position.Y = 24.000000000000000000
         Text = 'Last tile X=0, Y=0'
-        TabOrder = 40
+        TabOrder = 39
+        object CheckBox_derelict: TCheckBox
+          Position.Y = 273.000000000000000000
+          TabOrder = 4
+          Text = 'is derelict'
+          OnChange = CheckBox_derelictChange
+        end
       end
       object ComboBox2: TComboBox
         Enabled = False
@@ -122,67 +138,78 @@ object Form1: TForm1
           'No component')
         ItemIndex = 0
         Position.X = 16.000000000000000000
-        Position.Y = 104.000000000000000000
+        Position.Y = 79.000000000000000000
         Size.Width = 121.000000000000000000
         Size.Height = 22.000000000000000000
         Size.PlatformDefault = False
-        TabOrder = 41
-      end
-      object ColorPicker1: TColorPicker
-        Position.X = 160.000000000000000000
-        Position.Y = 24.000000000000000000
-        Size.Width = 18.000000000000000000
-        Size.Height = 137.000000000000000000
-        Size.PlatformDefault = False
-        TabOrder = 42
-        OnClick = ColorPicker1Click
+        TabOrder = 40
       end
       object Edit_tile_color: TEdit
         Touch.InteractiveGestures = [LongTap, DoubleTap]
-        TabOrder = 43
+        TabOrder = 41
         ReadOnly = True
-        Text = 'hex color'
+        Text = '#FFFF0000'
         Position.X = 16.000000000000000000
-        Position.Y = 136.000000000000000000
-        Size.Width = 121.000000000000000000
+        Position.Y = 267.000000000000000000
+        Size.Width = 73.000000000000000000
         Size.Height = 22.000000000000000000
         Size.PlatformDefault = False
       end
+      object ColorPanel1: TColorPanel
+        Color = claDarkorange
+        Position.X = 16.000000000000000000
+        Position.Y = 109.000000000000000000
+        Size.Width = 166.000000000000000000
+        Size.Height = 150.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 42
+        UseAlpha = False
+        OnChange = ColorPanel1Change
+      end
     end
-    object Label1: TLabel
-      Position.X = 16.000000000000000000
-      Position.Y = 344.000000000000000000
-      Text = 'Ship code:'
-      TabOrder = 2
-    end
-    object Memo_shipcode: TMemo
-      Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
-      DataDetectorTypes = []
-      TextSettings.WordWrap = True
-      Position.X = 16.000000000000000000
-      Position.Y = 368.000000000000000000
-      Size.Width = 169.000000000000000000
-      Size.Height = 209.000000000000000000
+    object GroupBox3: TGroupBox
+      Align = Client
+      Size.Width = 224.000000000000000000
+      Size.Height = 283.000000000000000000
       Size.PlatformDefault = False
-      TabOrder = 3
-      Viewport.Width = 165.000000000000000000
-      Viewport.Height = 205.000000000000000000
+      Text = 'Ship code'
+      TabOrder = 2
+      object Memo_shipcode: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        DataDetectorTypes = []
+        ReadOnly = True
+        TextSettings.WordWrap = True
+        Align = Client
+        Margins.Left = 10.000000000000000000
+        Margins.Top = 20.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Margins.Bottom = 10.000000000000000000
+        Size.Width = 204.000000000000000000
+        Size.Height = 253.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Viewport.Width = 200.000000000000000000
+        Viewport.Height = 249.000000000000000000
+      end
     end
   end
   object SaveDialog1: TSaveDialog
     DefaultExt = 'shipcode'
-    Title = 'Save the room schematic'
+    Filter = 'ship designs|*.shipcode'
+    Title = 'Export design as json'
     Left = 640
-    Top = 424
+    Top = 520
   end
   object OpenDialog1: TOpenDialog
-    DefaultExt = 'json'
-    FileName = 'room_lounge'
+    DefaultExt = 'shipcode'
+    Filter = 'ship designs|*.shipcode'
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Title = 'Import design from json'
     Left = 728
-    Top = 424
+    Top = 520
   end
   object Rectangle1: TRectangle
-    Align = Client
+    Align = Left
     Fill.Kind = Gradient
     Fill.Gradient.Points = <
       item
@@ -198,16 +225,16 @@ object Form1: TForm1
     Fill.Gradient.StopPosition.X = 0.499999970197677600
     Fill.Gradient.StopPosition.Y = 0.000000000000000000
     HitTest = False
-    Size.Width = 600.000000000000000000
-    Size.Height = 600.000000000000000000
+    Size.Width = 800.000000000000000000
+    Size.Height = 800.000000000000000000
     Size.PlatformDefault = False
     object PlotGrid1: TPlotGrid
       Align = Client
       Frequency = 30.000000000000000000
       LineFill.Color = claLightblue
       Marks = 30.000000000000000000
-      Size.Width = 600.000000000000000000
-      Size.Height = 600.000000000000000000
+      Size.Width = 800.000000000000000000
+      Size.Height = 800.000000000000000000
       Size.PlatformDefault = False
       OnMouseDown = PlotGrid1MouseDown
       OnMouseMove = PlotGrid1MouseMove
@@ -218,8 +245,8 @@ object Form1: TForm1
           end>
         Align = Client
         HitTest = False
-        Size.Width = 600.000000000000000000
-        Size.Height = 600.000000000000000000
+        Size.Width = 800.000000000000000000
+        Size.Height = 800.000000000000000000
         Size.PlatformDefault = False
       end
     end

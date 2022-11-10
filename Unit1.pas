@@ -64,11 +64,9 @@ type
     GroupBox1: TGroupBox;
     SpinBox_room_size_x: TSpinBox;
     SpinBox_room_size_y: TSpinBox;
-    ColorPicker1: TColorPicker;
     Button1: TButton;
     GroupBox2: TGroupBox;
     ComboBox_tiles: TComboBox;
-    CheckBox_walkable: TCheckBox;
     Label_last_tile: TLabel;
     ComboBox2: TComboBox;
     Edit_tile_color: TEdit;
@@ -78,10 +76,13 @@ type
     OpenDialog1: TOpenDialog;
     Rectangle1: TRectangle;
     PlotGrid1: TPlotGrid;
-    Label1: TLabel;
     Memo_shipcode: TMemo;
     Image_ship_tiles: TImage;
-    procedure ColorPicker1Click(Sender: TObject);
+    Edit_author: TEdit;
+    GroupBox3: TGroupBox;
+    Edit_ship_class_name: TEdit;
+    ColorPanel1: TColorPanel;
+    CheckBox_derelict: TCheckBox;
     procedure Button1Click(Sender: TObject);
     procedure ComboBox_tilesChange(Sender: TObject);
     procedure PlotGrid1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -93,6 +94,10 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure Button_saveClick(Sender: TObject);
     procedure Button_loadClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure ColorPanel1Change(Sender: TObject);
+    procedure CheckBox_derelictChange(Sender: TObject);
   private
     { Private declarations }
   public
@@ -102,12 +107,14 @@ type
     function Is_same_tiletype_as_selected(tile_point: TPoint): boolean;
     function Mouse_to_tile_point(X,Y:single): TPoint;
     procedure Redraw_ship_tiles;
+    procedure Import_layout_as_json(json:string);
   end;
 
 var
   Form1: TForm1;
   fDown: TPointF;
   painting_tiles: boolean;
+  derelict: boolean;
   tiles: array of array of char;
   tilecount_x, tilecount_y: integer;
   previous_shipCode: string;
@@ -116,9 +123,21 @@ implementation
 
 {$R *.fmx}
 
+function Simulate_random_damage: integer;
+begin
+  result:= random(21) * 5;
+end;
+
+function Randomize_color_alpha(inputColor: TAlphaColor): TAlphaColor;
+begin
+  TAlphaColorRec(inputColor).A:= random(256);
+  result:= inputColor;
+end;
+
 procedure TForm1.Redraw_ship_tiles;
 var buffer: TBitmap;
     size: integer;
+    FillBrush: TBrush;
 
   procedure Draw_tile(tile_point: TPoint; tile: TTileType);
 
@@ -135,13 +154,24 @@ var buffer: TBitmap;
         TTT_Floor:    tile_color:= TAlphaColorRec.LightGray;
         TTT_Window:   tile_color:= TAlphaColorRec.Cyan;
         TTT_Airlock:  tile_color:= TAlphaColorRec.Gray;
-      else tile_color:= ColorPicker1.Color;
+      else tile_color:= ColorPanel1.Color;
       end;
 
       var FloorBrush:= TBrush.Create(TBrushKind.Solid, tile_color);
       try
         buffer.Canvas.DrawRect(rect,1);
         buffer.Canvas.FillRect(rect,1,FloorBrush);
+
+        if derelict then
+          begin
+            var damage:= Simulate_random_damage;
+            if damage>0 then
+              begin
+                FloorBrush.Color:= Randomize_color_alpha(TAlphaColorRec.Black);
+                buffer.Canvas.FillRect(rect,1,FloorBrush);
+              end;
+          end;
+
       finally
         FloorBrush.Free;
       end;
@@ -166,6 +196,16 @@ var buffer: TBitmap;
 
       buffer.Canvas.DrawPolygon(poly,1);
       buffer.Canvas.FillPolygon(poly,1);
+
+      if derelict then
+        begin
+          var damage:= Simulate_random_damage;
+          if damage>0 then
+            begin
+              buffer.Canvas.Fill.Color:= Randomize_color_alpha(TAlphaColorRec.Black);
+              buffer.Canvas.FillPolygon(poly,1);
+            end;
+        end;
     end;
 
   begin
@@ -185,7 +225,7 @@ var buffer: TBitmap;
     buffer.Canvas.BeginScene;
     buffer.Canvas.Clear(TAlphaColorRec.Null);
 
-    var FillBrush:= TBrush.Create(TBrushKind.Solid, ColorPicker1.Color);
+    FillBrush:= TBrush.Create(TBrushKind.Solid, ColorPanel1.Color);
     buffer.Canvas.Fill:= FillBrush;
     buffer.Canvas.Stroke.Thickness:= 3;
 
@@ -193,6 +233,7 @@ var buffer: TBitmap;
       for var x:= 0 to tilecount_x-1 do
       for var y:= 0 to tilecount_y-1 do
         begin
+          buffer.Canvas.Fill.Color:= ColorPanel1.Color;
           var tile:= TTileType.CharToTile( tiles[x,y] );
           if tile=TTileType.TTT_Emptytile then continue;
           Draw_tile(TPoint.Create(x,y), tile);
@@ -317,12 +358,20 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   painting_tiles:= false;
+  derelict:= false;
   Init_blueprint;
 
   ComboBox_tiles.Clear;
   for var tile:= low(TTileType) to high(TTileType) do
     ComboBox_tiles.Items.Add( tile.ToString );
   ComboBox_tiles.ItemIndex:= 2;
+end;
+
+procedure TForm1.FormResize(Sender: TObject);
+begin
+  Rectangle1.Width:= Rectangle1.Height;
+  PlotGrid1.Frequency:= PlotGrid1.Height / tilecount_y;
+  Redraw_ship_tiles;
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -336,25 +385,121 @@ begin
   Init_blueprint;
 end;
 
+procedure String_to_tiles(input:string);
+begin
+  try
+    Form1.Init_blueprint;
+    var index:= 1;
+    for var x := 0 to tilecount_x-1 do
+    for var y := 0 to tilecount_y-1 do
+      begin
+        tiles[x,y]:= input[index];
+        inc(index);
+      end;
+
+    form1.Memo_shipcode.Text:= input;
+
+  except
+    ShowMessage('Error loading the layout');
+  end;
+end;
+
+procedure TForm1.Import_layout_as_json(json:string);
+begin
+  var JSONObject := TJSONObject.ParseJSONValue(json);
+  try
+    Edit_ship_class_name.Text:= JSONObject.GetValue<String>('ship_class_name');
+    Edit_author.Text:= JSONObject.GetValue<String>('author');
+    SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('tilecount_x');
+    SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('tilecount_y');
+    ColorPanel1.color:= StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
+    String_to_tiles( JSONObject.GetValue<String>('layout') );
+    Redraw_ship_tiles;
+
+  finally
+    JSONObject.Free;
+  end;
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  derelict:= not derelict;
+  Redraw_ship_tiles;
+end;
+
 procedure TForm1.Button_loadClick(Sender: TObject);
 begin
   if OpenDialog1.Execute then
-    Memo_shipcode.Text:= FileToString(OpenDialog1.FileName);
+    Import_layout_as_json( FileToString(OpenDialog1.FileName) );
+end;
+
+function Tiles_to_string: string;
+begin
+  result:= '';
+  try
+    for var x := 0 to tilecount_x-1 do
+    for var y := 0 to tilecount_y-1 do
+      result:= result + tiles[x,y];
+
+  except
+    ShowMessage('Error saving the layout');
+  end;
+end;
+
+function Export_layout_as_json: string;
+begin
+  var JSONObject := TJSONObject.Create;
+  try
+    try
+      JSONObject.AddPair('ship_class_name',Form1.Edit_ship_class_name.Text);
+      JSONObject.AddPair('author',form1.Edit_author.Text);
+      JSONObject.AddPair('hull_color',AlphaColorToString(form1.ColorPanel1.color));
+      JSONObject.AddPair('tilecount_x',tilecount_x);
+      JSONObject.AddPair('tilecount_y',tilecount_y);
+      JSONObject.AddPair('layout',Tiles_to_string);
+
+    except
+      ShowMessage('Error saving the data into json');
+    end;
+
+  finally
+    result:= JSONObject.ToString;
+    JSONObject.Free;
+  end;
 end;
 
 procedure TForm1.Button_saveClick(Sender: TObject);
 begin
-  var filename:= 'New ship '+
+  if form1.Edit_author.Text.IsEmpty then
+    begin
+      ShowMessage('Please add your name as author');
+      exit;
+    end;
+  if form1.Edit_ship_class_name.Text.IsEmpty then
+    begin
+      ShowMessage('Please add ship class name for the design');
+      exit;
+    end;
+
+  var filename:= Form1.Edit_ship_class_name.Text +' '+
     SpinBox_room_size_x.Value.ToString+'x'+SpinBox_room_size_y.Value.ToString;
   SaveDialog1.FileName:= filename;
 
+  var json:= Export_layout_as_json;
+
   if SaveDialog1.Execute then
-    StringToFile(Memo_shipcode.Text, SaveDialog1.FileName);
+    StringToFile(json, SaveDialog1.FileName);
 end;
 
-procedure TForm1.ColorPicker1Click(Sender: TObject);
+procedure TForm1.CheckBox_derelictChange(Sender: TObject);
 begin
-  var color := ColorPicker1.color;
+  derelict:= CheckBox_derelict.IsChecked;
+  Redraw_ship_tiles;
+end;
+
+procedure TForm1.ColorPanel1Change(Sender: TObject);
+begin
+  var color := ColorPanel1.color;
   Edit_tile_color.Text := AlphaColorToString(color);
 end;
 

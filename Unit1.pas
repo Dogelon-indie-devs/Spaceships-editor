@@ -28,6 +28,7 @@ uses
   FMX.EditBox,
   FMX.SpinBox,
   FMX.Types,
+  FMX.Layouts,
   FMX.Controls,
   FMX.Controls.Presentation,
 
@@ -84,6 +85,9 @@ type
     ColorPanel1: TColorPanel;
     CheckBox_derelict: TCheckBox;
     CheckBox_outside_view: TCheckBox;
+    Button_screenshot: TButton;
+    SaveDialog2: TSaveDialog;
+    Layout1: TLayout;
     procedure Button1Click(Sender: TObject);
     procedure ComboBox_tilesChange(Sender: TObject);
     procedure PlotGrid1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -100,6 +104,7 @@ type
     procedure ColorPanel1Change(Sender: TObject);
     procedure CheckBox_derelictChange(Sender: TObject);
     procedure CheckBox_outside_viewChange(Sender: TObject);
+    procedure Button_screenshotClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -495,6 +500,16 @@ begin
 
   if SaveDialog1.Execute then
     StringToFile(json, SaveDialog1.FileName);
+end;
+
+procedure TForm1.Button_screenshotClick(Sender: TObject);
+begin
+  var filename:= Form1.Edit_ship_class_name.Text +' '+
+    SpinBox_room_size_x.Value.ToString+'x'+SpinBox_room_size_y.Value.ToString;
+  SaveDialog2.FileName:= filename;
+
+  if SaveDialog2.Execute then
+    Layout1.MakeScreenshot.SaveToFile(SaveDialog2.FileName);
 end;
 
 procedure TForm1.CheckBox_derelictChange(Sender: TObject);

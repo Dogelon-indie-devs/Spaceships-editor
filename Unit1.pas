@@ -61,7 +61,7 @@ end;
 
 type
   TForm1 = class(TForm)
-    Panel1: TPanel;
+    Panel_controls: TPanel;
     GroupBox1: TGroupBox;
     SpinBox_room_size_x: TSpinBox;
     SpinBox_room_size_y: TSpinBox;
@@ -75,7 +75,7 @@ type
     Button_load: TButton;
     SaveDialog1: TSaveDialog;
     OpenDialog1: TOpenDialog;
-    Rectangle1: TRectangle;
+    Rectangle_background: TRectangle;
     PlotGrid1: TPlotGrid;
     Memo_shipcode: TMemo;
     Image_ship_tiles: TImage;
@@ -115,6 +115,7 @@ type
     function Mouse_to_tile_point(X,Y:single): TPoint;
     procedure Redraw_ship_tiles;
     procedure Import_layout_as_json(json:string);
+    procedure Optimize_grid_size;
   end;
 
 var
@@ -138,6 +139,162 @@ function Randomize_color_alpha(inputColor: TAlphaColor): TAlphaColor;
 begin
   TAlphaColorRec(inputColor).A:= random(256);
   result:= inputColor;
+end;
+
+procedure Move_design_left(steps:integer);
+begin
+  for var y:= 0 to tilecount_y-1 do
+  for var x:= steps to tilecount_x-1 do
+    begin
+      tiles[x-steps,y]:= tiles[x,y];
+      tiles[x,y]:= '0';
+    end;
+end;
+
+procedure Move_design_up(steps:integer);
+begin
+  for var x:= 0 to tilecount_x-1 do
+  for var y:= steps to tilecount_y-1 do
+    begin
+      tiles[x,y-steps]:= tiles[x,y];
+      tiles[x,y]:= '0';
+    end;
+end;
+
+procedure TForm1.Optimize_grid_size;
+var empty_lines: integer;
+
+  procedure Check_up;
+  begin
+    empty_lines:= 0;
+    for var y:= 0 to tilecount_y-1 do
+      begin
+        var line:= '';
+        for var x:= 0 to tilecount_x-1 do
+          begin
+            var tile:= tiles[x,y];
+            if tile='0' then
+              continue
+            else
+              line:= line + tile;
+          end;
+
+        if line.IsEmpty then
+          inc(empty_lines)
+        else
+          break;
+      end;
+
+    if empty_lines>1 then
+      begin
+        const keep_one_line_empty = 1;
+        var change:= empty_lines - keep_one_line_empty;
+        Move_design_up(change);
+        tilecount_y:= tilecount_y - change;
+      end;
+  end;
+
+  procedure Check_down;
+  begin
+    empty_lines:= 0;
+    for var y:= tilecount_y-1 downto 0 do
+      begin
+        var line:= '';
+        for var x:= 0 to tilecount_x-1 do
+          begin
+            var tile:= tiles[x,y];
+            if tile='0' then
+              continue
+            else
+              line:= line + tile;
+          end;
+
+        if line.IsEmpty then
+          inc(empty_lines)
+        else
+          break;
+      end;
+
+    if empty_lines>1 then
+      begin
+        const keep_one_line_empty = 1;
+        var change:= empty_lines - keep_one_line_empty;
+        tilecount_y:= tilecount_y - change;
+      end;
+  end;
+
+  procedure Check_left;
+  begin
+    empty_lines:= 0;
+    for var x:= 0 to tilecount_x-1 do
+      begin
+        var line:= '';
+        for var y:= 0 to tilecount_y-1 do
+          begin
+            var tile:= tiles[x,y];
+            if tile='0' then
+              continue
+            else
+              line:= line + tile;
+          end;
+
+        if line.IsEmpty then
+          inc(empty_lines)
+        else
+          break;
+      end;
+
+    if empty_lines>1 then
+      begin
+        const keep_one_line_empty = 1;
+        var change:= empty_lines - keep_one_line_empty;
+        Move_design_left(change);
+        tilecount_x:= tilecount_x - change;
+      end;
+  end;
+
+  procedure Check_right;
+  begin
+    empty_lines:= 0;
+    for var x:= tilecount_x-1 downto 0 do
+      begin
+        var line:= '';
+        for var y:= 0 to tilecount_y-1 do
+          begin
+            var tile:= tiles[x,y];
+            if tile='0' then
+              continue
+            else
+              line:= line + tile;
+          end;
+
+        if line.IsEmpty then
+          inc(empty_lines)
+        else
+          break;
+      end;
+
+    if empty_lines>1 then
+      begin
+        const keep_one_line_empty = 1;
+        var change:= empty_lines - keep_one_line_empty;
+        tilecount_x:= tilecount_x - change;
+      end;
+  end;
+
+begin
+  Check_up;
+  Check_down;
+  Check_left;
+  Check_right;
+
+  SpinBox_room_size_x.Value:= tilecount_x;
+  SpinBox_room_size_y.Value:= tilecount_y;
+
+  Init_blueprint;
+  Redraw_ship_tiles;
+
+  // unfinished
 end;
 
 procedure TForm1.Redraw_ship_tiles;
@@ -380,7 +537,7 @@ end;
 
 procedure TForm1.FormResize(Sender: TObject);
 begin
-  Rectangle1.Width:= Rectangle1.Height;
+  Layout1.Width:= Layout1.Height;
   PlotGrid1.Frequency:= PlotGrid1.Height / tilecount_y;
   Redraw_ship_tiles;
 end;

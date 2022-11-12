@@ -85,7 +85,7 @@ type
     ColorPanel1: TColorPanel;
     CheckBox_derelict: TCheckBox;
     CheckBox_outside_view: TCheckBox;
-    Button_screenshot: TButton;
+    Button_optimize: TButton;
     SaveDialog2: TSaveDialog;
     Layout1: TLayout;
     procedure Button1Click(Sender: TObject);
@@ -104,7 +104,7 @@ type
     procedure ColorPanel1Change(Sender: TObject);
     procedure CheckBox_derelictChange(Sender: TObject);
     procedure CheckBox_outside_viewChange(Sender: TObject);
-    procedure Button_screenshotClick(Sender: TObject);
+    procedure Button_optimizeClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -131,8 +131,20 @@ implementation
 {$R *.fmx}
 
 function Simulate_random_damage: integer;
+const
+  damage_stages = 21;
+  minimum_damage= 1;
+  step = 5;
 begin
-  result:= random(21) * 5;
+  result:= (random(damage_stages-minimum_damage)+minimum_damage) * step;
+end;
+
+function Shade_of_black_according_to_damage(damage:integer): TAlphaColor;
+var inputColor: TAlphaColor;
+begin
+  inputColor:= TAlphaColorRec.Black;
+  TAlphaColorRec(inputColor).A:= 256 - damage;
+  result:= inputColor;
 end;
 
 function Randomize_color_alpha(inputColor: TAlphaColor): TAlphaColor;
@@ -288,13 +300,22 @@ begin
   Check_left;
   Check_right;
 
+  var changed:= (SpinBox_room_size_x.Value <> tilecount_x) OR (SpinBox_room_size_y.Value <> tilecount_y);
+  if not changed then exit;
+
   SpinBox_room_size_x.Value:= tilecount_x;
   SpinBox_room_size_y.Value:= tilecount_y;
 
   Init_blueprint;
   Redraw_ship_tiles;
 
+  ShowMessage('Layout optimized, extra rows/columns removed');
   // unfinished
+end;
+
+procedure TForm1.Button_optimizeClick(Sender: TObject);
+begin
+  Optimize_grid_size;
 end;
 
 procedure TForm1.Redraw_ship_tiles;
@@ -335,7 +356,7 @@ var buffer: TBitmap;
             var damage:= Simulate_random_damage;
             if damage>0 then
               begin
-                FloorBrush.Color:= Randomize_color_alpha(TAlphaColorRec.Black);
+                FloorBrush.Color:= Shade_of_black_according_to_damage(damage);
                 buffer.Canvas.FillRect(rect,1,FloorBrush);
               end;
           end;
@@ -370,7 +391,7 @@ var buffer: TBitmap;
           var damage:= Simulate_random_damage;
           if damage>0 then
             begin
-              buffer.Canvas.Fill.Color:= Randomize_color_alpha(TAlphaColorRec.Black);
+              buffer.Canvas.Fill.Color:= Shade_of_black_according_to_damage(damage);
               buffer.Canvas.FillPolygon(poly,1);
             end;
         end;
@@ -657,16 +678,9 @@ begin
 
   if SaveDialog1.Execute then
     StringToFile(json, SaveDialog1.FileName);
-end;
-
-procedure TForm1.Button_screenshotClick(Sender: TObject);
-begin
-  var filename:= Form1.Edit_ship_class_name.Text +' '+
-    SpinBox_room_size_x.Value.ToString+'x'+SpinBox_room_size_y.Value.ToString;
-  SaveDialog2.FileName:= filename;
 
   if SaveDialog2.Execute then
-    Layout1.MakeScreenshot.SaveToFile(SaveDialog2.FileName);
+    Image_ship_tiles.MakeScreenshot.SaveToFile(SaveDialog2.FileName);
 end;
 
 procedure TForm1.CheckBox_derelictChange(Sender: TObject);

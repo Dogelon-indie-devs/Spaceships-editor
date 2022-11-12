@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  Caption = 'Spaceships tile editor v0.2.2'
+  Caption = 'Spaceships tile editor v0.2.3'
   ClientHeight = 800
   ClientWidth = 1024
   Position = ScreenCenter
@@ -99,15 +99,15 @@ object Form1: TForm1
         Size.PlatformDefault = False
         TextPrompt = 'ship class name'
       end
-      object Button_screenshot: TButton
+      object Button_optimize: TButton
         Position.X = 16.000000000000000000
         Position.Y = 170.000000000000000000
         Size.Width = 161.000000000000000000
         Size.Height = 22.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 45
-        Text = 'Make screenshot'
-        OnClick = Button_screenshotClick
+        Text = 'Optimize'
+        OnClick = Button_optimizeClick
       end
     end
     object GroupBox2: TGroupBox
@@ -226,9 +226,9 @@ object Form1: TForm1
     Top = 40
   end
   object SaveDialog2: TSaveDialog
-    DefaultExt = 'jpg'
-    Filter = 'screenshot|*.jpg'
-    Title = 'Save screenshot as jpg'
+    DefaultExt = 'png'
+    Filter = 'screenshot|*.png'
+    Title = 'Save screenshot as png image'
     Left = 640
     Top = 104
   end

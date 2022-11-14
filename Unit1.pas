@@ -673,6 +673,7 @@ begin
   var filename:= Form1.Edit_ship_class_name.Text +' '+
     SpinBox_room_size_x.Value.ToString+'x'+SpinBox_room_size_y.Value.ToString;
   SaveDialog1.FileName:= filename;
+  SaveDialog2.FileName:= filename;
 
   var json:= Export_layout_as_json;
 

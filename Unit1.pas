@@ -136,14 +136,15 @@ const
   minimum_damage= 1;
   step = 5;
 begin
+  // returns damage range 5 - 100
   result:= (random(damage_stages-minimum_damage)+minimum_damage) * step;
 end;
 
 function Shade_of_black_according_to_damage(damage:integer): TAlphaColor;
-var inputColor: TAlphaColor;
 begin
-  inputColor:= TAlphaColorRec.Black;
-  TAlphaColorRec(inputColor).A:= 256 - damage;
+  var inputColor:= TAlphaColorRec.Black;
+  // inverse to damage, doubled to use range 10 - 200 alpha value
+  TAlphaColorRec(inputColor).A:= 256 - (damage*2);
   result:= inputColor;
 end;
 

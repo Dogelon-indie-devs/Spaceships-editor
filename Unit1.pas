@@ -523,12 +523,13 @@ var buffer: TBitmap;
         BeginScene;
         Clear(TAlphaColorRec.Null);
         Stroke.Color:= TAlphaColorRec.White;
+        var opacity:= 0.5;
 
         for var x:= 1 to tilecount_x-1 do
-          DrawLine(TPointF.Create(X*BlockSize,0),TPointF.Create(X*BlockSize,Height),1);
+          DrawLine(TPointF.Create(X*BlockSize,0),TPointF.Create(X*BlockSize,Height),opacity);
 
         for var y:= 1 to tilecount_y-1 do
-          DrawLine(TPointF.Create(0,Y*BlockSize),TPointF.Create(Width,Y*BlockSize),1);
+          DrawLine(TPointF.Create(0,Y*BlockSize),TPointF.Create(Width,Y*BlockSize),opacity);
 
         EndScene;
       end;

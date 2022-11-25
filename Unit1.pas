@@ -309,6 +309,7 @@ begin
   SpinBox_room_size_y.Value:= tilecount_y;
   SetLength(tiles,tilecount_x,tilecount_y);
 
+  Recalculate_sizing;
   Redraw_grid;
   Redraw_ship_tiles;
 
@@ -583,6 +584,7 @@ end;
 procedure String_to_tiles(input:string);
 begin
   try
+    Form1.Recalculate_sizing;
     Form1.Clear_tiles;
     Form1.Redraw_grid;
     var index:= 1;

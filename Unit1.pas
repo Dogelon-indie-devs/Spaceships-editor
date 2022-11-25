@@ -230,8 +230,6 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         tilecount_y:= tilecount_y - change;
-        if tilecount_y mod 2 > 0 then
-          inc(tilecount_y);
       end;
   end;
 
@@ -291,8 +289,6 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         tilecount_x:= tilecount_x - change;
-        if tilecount_x mod 2 > 0 then
-          inc(tilecount_x);
       end;
   end;
 
@@ -303,7 +299,11 @@ begin
   Check_right;
 
   var changed:= (SpinBox_room_size_x.Value <> tilecount_x) OR (SpinBox_room_size_y.Value <> tilecount_y);
-  if not changed then exit;
+  if not changed then
+    begin
+      ShowMessage('Nothing to optimize');
+      exit;
+    end;
 
   SpinBox_room_size_x.Value:= tilecount_x;
   SpinBox_room_size_y.Value:= tilecount_y;
@@ -313,7 +313,7 @@ begin
   Redraw_grid;
   Redraw_ship_tiles;
 
-  ShowMessage('Layout optimized, extra rows/columns removed');
+  ShowMessage('Design optimized, extra rows/columns removed');
   // unfinished
 end;
 

@@ -11,6 +11,78 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnResize = FormResize
   DesignerMasterStyle = 0
+  object SaveDialog1: TSaveDialog
+    DefaultExt = 'shipcode'
+    Filter = 'ship designs|*.shipcode'
+    Title = 'Export design as json'
+    Left = 640
+    Top = 40
+  end
+  object OpenDialog1: TOpenDialog
+    DefaultExt = 'shipcode'
+    Filter = 'ship designs|*.shipcode'
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Title = 'Import design from json'
+    Left = 728
+    Top = 40
+  end
+  object SaveDialog2: TSaveDialog
+    DefaultExt = 'png'
+    Filter = 'screenshot|*.png'
+    Title = 'Save screenshot as png image'
+    Left = 640
+    Top = 104
+  end
+  object Layout1: TLayout
+    Align = Left
+    Size.Width = 800.000000000000000000
+    Size.Height = 800.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    object Rectangle_background: TRectangle
+      Align = Client
+      Fill.Kind = Gradient
+      Fill.Gradient.Points = <
+        item
+          Color = xFF1222FF
+          Offset = 0.000000000000000000
+        end
+        item
+          Color = xFF0095FF
+          Offset = 1.000000000000000000
+        end>
+      Fill.Gradient.StartPosition.X = 0.500000000000000000
+      Fill.Gradient.StartPosition.Y = 1.000000000000000000
+      Fill.Gradient.StopPosition.X = 0.499999970197677600
+      Fill.Gradient.StopPosition.Y = 0.000000000000000000
+      HitTest = False
+      Size.Width = 800.000000000000000000
+      Size.Height = 800.000000000000000000
+      Size.PlatformDefault = False
+      object Image_grid: TImage
+        MultiResBitmap = <
+          item
+          end>
+        Align = Client
+        Size.Width = 800.000000000000000000
+        Size.Height = 800.000000000000000000
+        Size.PlatformDefault = False
+        OnMouseDown = Image_gridMouseDown
+        OnMouseMove = Image_gridMouseMove
+        OnMouseUp = Image_gridMouseUp
+      end
+      object Image_ship_tiles: TImage
+        MultiResBitmap = <
+          item
+          end>
+        Align = Client
+        HitTest = False
+        Size.Width = 800.000000000000000000
+        Size.Height = 800.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
+  end
   object Panel_controls: TPanel
     Align = Client
     Size.Width = 224.000000000000000000
@@ -35,14 +107,14 @@ object Form1: TForm1
         Cursor = crIBeam
         DecimalDigits = 0
         Min = 3.000000000000000000
-        Value = 6.000000000000000000
+        Value = 10.000000000000000000
         Position.X = 16.000000000000000000
         Position.Y = 24.000000000000000000
         Size.Width = 81.000000000000000000
         Size.Height = 22.000000000000000000
         Size.PlatformDefault = False
       end
-      object Button1: TButton
+      object Button_generate: TButton
         Position.X = 16.000000000000000000
         Position.Y = 48.000000000000000000
         Size.Width = 162.000000000000000000
@@ -50,7 +122,7 @@ object Form1: TForm1
         Size.PlatformDefault = False
         TabOrder = 40
         Text = 'Generate'
-        OnClick = Button1Click
+        OnClick = Button_generateClick
       end
       object SpinBox_room_size_y: TSpinBox
         Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -58,7 +130,7 @@ object Form1: TForm1
         Cursor = crIBeam
         DecimalDigits = 0
         Min = 3.000000000000000000
-        Value = 6.000000000000000000
+        Value = 10.000000000000000000
         Position.X = 96.000000000000000000
         Position.Y = 24.000000000000000000
         Size.Width = 81.000000000000000000
@@ -207,78 +279,6 @@ object Form1: TForm1
         TabOrder = 3
         Viewport.Width = 200.000000000000000000
         Viewport.Height = 197.000000000000000000
-      end
-    end
-  end
-  object SaveDialog1: TSaveDialog
-    DefaultExt = 'shipcode'
-    Filter = 'ship designs|*.shipcode'
-    Title = 'Export design as json'
-    Left = 640
-    Top = 40
-  end
-  object OpenDialog1: TOpenDialog
-    DefaultExt = 'shipcode'
-    Filter = 'ship designs|*.shipcode'
-    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
-    Title = 'Import design from json'
-    Left = 728
-    Top = 40
-  end
-  object SaveDialog2: TSaveDialog
-    DefaultExt = 'png'
-    Filter = 'screenshot|*.png'
-    Title = 'Save screenshot as png image'
-    Left = 640
-    Top = 104
-  end
-  object Layout1: TLayout
-    Align = Left
-    Size.Width = 800.000000000000000000
-    Size.Height = 800.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 4
-    object Rectangle_background: TRectangle
-      Align = Client
-      Fill.Kind = Gradient
-      Fill.Gradient.Points = <
-        item
-          Color = xFF1222FF
-          Offset = 0.000000000000000000
-        end
-        item
-          Color = xFF0095FF
-          Offset = 1.000000000000000000
-        end>
-      Fill.Gradient.StartPosition.X = 0.500000000000000000
-      Fill.Gradient.StartPosition.Y = 1.000000000000000000
-      Fill.Gradient.StopPosition.X = 0.499999970197677600
-      Fill.Gradient.StopPosition.Y = 0.000000000000000000
-      HitTest = False
-      Size.Width = 800.000000000000000000
-      Size.Height = 800.000000000000000000
-      Size.PlatformDefault = False
-      object PlotGrid1: TPlotGrid
-        Align = Client
-        Frequency = 30.000000000000000000
-        LineFill.Color = claLightblue
-        Marks = 30.000000000000000000
-        Size.Width = 800.000000000000000000
-        Size.Height = 800.000000000000000000
-        Size.PlatformDefault = False
-        OnMouseDown = PlotGrid1MouseDown
-        OnMouseMove = PlotGrid1MouseMove
-        OnMouseUp = PlotGrid1MouseUp
-        object Image_ship_tiles: TImage
-          MultiResBitmap = <
-            item
-            end>
-          Align = Client
-          HitTest = False
-          Size.Width = 800.000000000000000000
-          Size.Height = 800.000000000000000000
-          Size.PlatformDefault = False
-        end
       end
     end
   end

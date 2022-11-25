@@ -283,6 +283,7 @@
         <DCCReference Include="..\spaceships-shared\game_functions.pas"/>
         <DCCReference Include="..\spaceships-shared\game_classes.pas"/>
         <DCCReference Include="..\spaceships-shared\game_consts.pas"/>
+        <DCCReference Include="..\spaceships-shared\ship_graphics.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -327,6 +328,18 @@
                 <DeployFile LocalName="Win32\Debug\ShipEditor.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>ShipEditor.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win64\Debug\ShipEditor.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win64">
+                        <RemoteName>ShipEditor.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win64\Debug\ShipEditor.rsm" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win64">
+                        <RemoteName>ShipEditor.rsm</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

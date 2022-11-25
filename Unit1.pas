@@ -32,7 +32,8 @@ uses
   FMX.Controls,
   FMX.Controls.Presentation,
 
-  game_functions;
+  game_functions,
+  ship_graphics;
 
 type TTileType = (
   TTT_Emptytile = 0,
@@ -52,20 +53,13 @@ TTileTypeHelper = record helper for TTileType
   class function CharToTile(input: char): TTileType; static;
 end;
 
-type TTile = class
-  x,y: integer;
-  hull: TTileType;
-  component: string;
-  walkable: boolean;
-end;
-
 type
   TForm1 = class(TForm)
     Panel_controls: TPanel;
     GroupBox1: TGroupBox;
     SpinBox_room_size_x: TSpinBox;
     SpinBox_room_size_y: TSpinBox;
-    Button1: TButton;
+    Button_generate: TButton;
     GroupBox2: TGroupBox;
     ComboBox_tiles: TComboBox;
     Label_last_tile: TLabel;
@@ -76,7 +70,6 @@ type
     SaveDialog1: TSaveDialog;
     OpenDialog1: TOpenDialog;
     Rectangle_background: TRectangle;
-    PlotGrid1: TPlotGrid;
     Memo_shipcode: TMemo;
     Image_ship_tiles: TImage;
     Edit_author: TEdit;
@@ -88,15 +81,10 @@ type
     Button_optimize: TButton;
     SaveDialog2: TSaveDialog;
     Layout1: TLayout;
-    procedure Button1Click(Sender: TObject);
+    Image_grid: TImage;
+    procedure Button_generateClick(Sender: TObject);
     procedure ComboBox_tilesChange(Sender: TObject);
-    procedure PlotGrid1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Single);
     procedure FormCreate(Sender: TObject);
-    procedure PlotGrid1MouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Single);
-    procedure PlotGrid1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Single);
     procedure Button_saveClick(Sender: TObject);
     procedure Button_loadClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -105,15 +93,23 @@ type
     procedure CheckBox_derelictChange(Sender: TObject);
     procedure CheckBox_outside_viewChange(Sender: TObject);
     procedure Button_optimizeClick(Sender: TObject);
+    procedure Image_gridMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
+    procedure Image_gridMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Single);
+    procedure Image_gridMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
   private
     { Private declarations }
   public
     { Public declarations }
-    procedure Init_blueprint;
+    procedure Clear_tiles;
+    procedure Redraw_grid;
     procedure Paint_tile(tile_point: TPoint);
     function Is_same_tiletype_as_selected(tile_point: TPoint): boolean;
     function Mouse_to_tile_point(X,Y:single): TPoint;
     procedure Redraw_ship_tiles;
+    procedure Recalculate_sizing;
     procedure Import_layout_as_json(json:string);
     procedure Optimize_grid_size;
   end;
@@ -125,6 +121,7 @@ var
   tiles: array of array of char;
   tilecount_x, tilecount_y: integer;
   previous_shipCode: string;
+  BlockSize: integer;
 
 implementation
 
@@ -233,6 +230,8 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         tilecount_y:= tilecount_y - change;
+        if tilecount_y mod 2 > 0 then
+          inc(tilecount_y);
       end;
   end;
 
@@ -292,6 +291,8 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         tilecount_x:= tilecount_x - change;
+        if tilecount_x mod 2 > 0 then
+          inc(tilecount_x);
       end;
   end;
 
@@ -306,8 +307,9 @@ begin
 
   SpinBox_room_size_x.Value:= tilecount_x;
   SpinBox_room_size_y.Value:= tilecount_y;
+  SetLength(tiles,tilecount_x,tilecount_y);
 
-  Init_blueprint;
+  Redraw_grid;
   Redraw_ship_tiles;
 
   ShowMessage('Layout optimized, extra rows/columns removed');
@@ -321,7 +323,6 @@ end;
 
 procedure TForm1.Redraw_ship_tiles;
 var buffer: TBitmap;
-    size: integer;
     FillBrush: TBrush;
 
   procedure Draw_tile(tile_point: TPoint; tile: TTileType);
@@ -330,10 +331,10 @@ var buffer: TBitmap;
     var tile_color: TAlphaColor;
     begin
       var rect:= TRect.Create(
-        tile_point.X*size,
-        tile_point.Y*size,
-        (tile_point.X+1)*size,
-        (tile_point.Y+1)*size);
+        tile_point.X*BlockSize,
+        tile_point.Y*BlockSize,
+        (tile_point.X+1)*BlockSize,
+        (tile_point.Y+1)*BlockSize);
 
       case tile of
         TTT_Floor:    tile_color:= TAlphaColorRec.LightGray;
@@ -370,10 +371,10 @@ var buffer: TBitmap;
     procedure Draw_triangle(rotation:integer);
     var points: array[0..7] of TPoint;
     begin
-      points[0]:= TPoint.Create( tile_point.X*size,   tile_point.Y*size);
-      points[1]:= TPoint.Create((tile_point.X+1)*size,tile_point.Y*size);
-      points[2]:= TPoint.Create((tile_point.X+1)*size,(tile_point.Y+1)*size);
-      points[3]:= TPoint.Create( tile_point.X*size,   (tile_point.Y+1)*size);
+      points[0]:= TPoint.Create( tile_point.X*BlockSize,    tile_point.Y*BlockSize);
+      points[1]:= TPoint.Create((tile_point.X+1)*BlockSize, tile_point.Y*BlockSize);
+      points[2]:= TPoint.Create((tile_point.X+1)*BlockSize,(tile_point.Y+1)*BlockSize);
+      points[3]:= TPoint.Create( tile_point.X*BlockSize,   (tile_point.Y+1)*BlockSize);
       points[4]:= points[0];
       points[5]:= points[1];
       points[6]:= points[2];
@@ -410,8 +411,6 @@ var buffer: TBitmap;
 
   procedure Draw_tiles_to_buffer;
   begin
-    size:= round(form1.PlotGrid1.Frequency);
-
     buffer.Canvas.BeginScene;
     buffer.Canvas.Clear(TAlphaColorRec.Null);
 
@@ -436,10 +435,11 @@ var buffer: TBitmap;
   end;
 
 begin
-  buffer:= TBitmap.Create(round(PlotGrid1.Width),round(PlotGrid1.Height));
+  buffer:= TBitmap.Create(round(Layout1.Width),round(Layout1.Height));
   try
     Draw_tiles_to_buffer;
     Image_ship_tiles.Bitmap.Assign(buffer);
+    //buffer.SaveToFile('test.bmp');
   finally
     buffer.Free;
   end;
@@ -471,16 +471,9 @@ end;
 
 function TForm1.Mouse_to_tile_point(X,Y:single): TPoint;
 begin
-  var freq:= round(PlotGrid1.Frequency);
-  var XX:= round(X) div freq;
-  var YY:= round(Y) div freq;
+  var XX:= round(X) div BlockSize;
+  var YY:= round(Y) div BlockSize;
   result:= TPoint.Create(XX,YY);
-end;
-
-procedure TForm1.PlotGrid1MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Single);
-begin
-  painting_tiles:= button=TMouseButton.mbLeft;
 end;
 
 procedure TForm1.Paint_tile(tile_point: TPoint);
@@ -508,35 +501,9 @@ begin
   Redraw_ship_tiles;
 end;
 
-procedure TForm1.PlotGrid1MouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Single);
+procedure TForm1.Clear_tiles;
 begin
-  if not painting_tiles then exit;
-
-  var tile_point:= Mouse_to_tile_point(x,y);
-  Paint_tile(tile_point);
-
-  Label_last_tile.Text:=
-    'Coords: X='+tile_point.x.ToString+', Y='+tile_point.y.ToString;
-end;
-
-procedure TForm1.PlotGrid1MouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Single);
-begin
-  if button<>TMouseButton.mbLeft then exit;
-  var tile_point:= Mouse_to_tile_point(x,y);
-  Paint_tile(tile_point);
-  painting_tiles:= false;
-end;
-
-procedure TForm1.Init_blueprint;
-begin
-  tilecount_x:= round(SpinBox_room_size_x.Value);
-  tilecount_y:= round(SpinBox_room_size_y.Value);
   SetLength(tiles,tilecount_x,tilecount_y);
-
-  PlotGrid1.Frequency:= PlotGrid1.Height / tilecount_y;
-  PlotGrid1.Marks:= 5;
 
   for var x:= 0 to tilecount_x-1 do
   for var y:= 0 to tilecount_y-1 do
@@ -545,11 +512,44 @@ begin
   Update_shipCode;
 end;
 
+procedure TForm1.Redraw_grid;
+var buffer: TBitmap;
+
+  procedure Draw_grid_to_buffer;
+  begin
+    with buffer.Canvas do
+      begin
+        BeginScene;
+        Clear(TAlphaColorRec.Null);
+        Stroke.Color:= TAlphaColorRec.White;
+
+        for var x:= 1 to tilecount_x-1 do
+          DrawLine(TPointF.Create(X*BlockSize,0),TPointF.Create(X*BlockSize,Height),1);
+
+        for var y:= 1 to tilecount_y-1 do
+          DrawLine(TPointF.Create(0,Y*BlockSize),TPointF.Create(Width,Y*BlockSize),1);
+
+        EndScene;
+      end;
+  end;
+
+begin
+  buffer:= TBitmap.Create(round(Layout1.Width),round(Layout1.Height));
+  try
+    Draw_grid_to_buffer;
+    Image_grid.Bitmap.Assign(buffer);
+  finally
+    buffer.Free;
+  end;
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   painting_tiles:= false;
   derelict:= false;
-  Init_blueprint;
+  Recalculate_sizing;
+  Clear_tiles;
+  Redraw_grid;
 
   ComboBox_tiles.Clear;
   for var tile:= low(TTileType) to high(TTileType) do
@@ -557,28 +557,34 @@ begin
   ComboBox_tiles.ItemIndex:= 2;
 end;
 
+procedure TForm1.Recalculate_sizing;
+begin
+  tilecount_x:= round(SpinBox_room_size_x.Value);
+  tilecount_y:= round(SpinBox_room_size_y.Value);
+
+  BlockSize:= round(Layout1.Height / tilecount_y);
+  Layout1.Width:= BlockSize * tilecount_x;
+end;
+
 procedure TForm1.FormResize(Sender: TObject);
 begin
-  Layout1.Width:= Layout1.Height;
-  PlotGrid1.Frequency:= PlotGrid1.Height / tilecount_y;
+  Recalculate_sizing;
+  Redraw_grid;
   Redraw_ship_tiles;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+procedure TForm1.Button_generateClick(Sender: TObject);
 begin
-  (*
-  Button1.Enabled:= false;
-  SpinBox_room_size_x.Enabled:= false;
-  SpinBox_room_size_y.Enabled:= false;
-  *)
-
-  Init_blueprint;
+  Recalculate_sizing;
+  Clear_tiles;
+  Redraw_grid;
 end;
 
 procedure String_to_tiles(input:string);
 begin
   try
-    Form1.Init_blueprint;
+    Form1.Clear_tiles;
+    Form1.Redraw_grid;
     var index:= 1;
     for var x := 0 to tilecount_x-1 do
     for var y := 0 to tilecount_y-1 do
@@ -592,6 +598,33 @@ begin
   except
     ShowMessage('Error loading the layout');
   end;
+end;
+
+procedure TForm1.Image_gridMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  painting_tiles:= button=TMouseButton.mbLeft;
+end;
+
+procedure TForm1.Image_gridMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Single);
+begin
+  if not painting_tiles then exit;
+
+  var tile_point:= Mouse_to_tile_point(x,y);
+  Paint_tile(tile_point);
+
+  Label_last_tile.Text:=
+    'Coords: X='+tile_point.x.ToString+', Y='+tile_point.y.ToString;
+end;
+
+procedure TForm1.Image_gridMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  if button<>TMouseButton.mbLeft then exit;
+  var tile_point:= Mouse_to_tile_point(x,y);
+  Paint_tile(tile_point);
+  painting_tiles:= false;
 end;
 
 procedure TForm1.Import_layout_as_json(json:string);

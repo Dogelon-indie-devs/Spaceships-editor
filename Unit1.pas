@@ -101,6 +101,8 @@ type
     procedure Image_gridMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure Button_testClick(Sender: TObject);
+    procedure Image_gridMouseWheel(Sender: TObject; Shift: TShiftState;
+      WheelDelta: Integer; var Handled: Boolean);
   private
     { Private declarations }
   public
@@ -624,6 +626,27 @@ begin
   var tile_point:= Mouse_to_tile_point(x,y);
   Paint_tile(tile_point);
   painting_tiles:= false;
+end;
+
+procedure TForm1.Image_gridMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; var Handled: Boolean);
+begin
+  var index:= ComboBox_tiles.ItemIndex;
+  var selected_corner:= (index > 2) AND (index < 7);
+  if not selected_corner then exit;
+
+  if WheelDelta>0 then
+    begin
+      ComboBox_tiles.ItemIndex:= ComboBox_tiles.ItemIndex +1;
+      if ComboBox_tiles.ItemIndex > 6 then
+        ComboBox_tiles.ItemIndex:= 3;
+    end
+  else
+    begin
+      ComboBox_tiles.ItemIndex:= ComboBox_tiles.ItemIndex -1;
+      if ComboBox_tiles.ItemIndex < 3 then
+        ComboBox_tiles.ItemIndex:= 6;
+    end;
 end;
 
 procedure TForm1.Import_layout_as_json(json:string);

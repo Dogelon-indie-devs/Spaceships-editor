@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  Caption = 'Spaceships tile editor v0.2.3'
+  Caption = 'Spaceships tile editor v0.3'
   ClientHeight = 800
   ClientWidth = 1024
   Position = ScreenCenter

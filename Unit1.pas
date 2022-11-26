@@ -103,9 +103,9 @@ type
 var
   Form1: TForm1;
   fDown: TPointF;
-  painting_tiles,outside_view,derelict: boolean;
+  design: ShipDesignRec;
+  painting_tiles: boolean;
   tiles: array of array of char;
-  tilecount_x, tilecount_y: integer;
   previous_shipCode: string;
   BlockSize: integer;
 
@@ -139,8 +139,8 @@ end;
 
 procedure Move_design_left(steps:integer);
 begin
-  for var y:= 0 to tilecount_y-1 do
-  for var x:= steps to tilecount_x-1 do
+  for var y:= 0 to design.tiles_y-1 do
+  for var x:= steps to design.tiles_x-1 do
     begin
       tiles[x-steps,y]:= tiles[x,y];
       tiles[x,y]:= '0';
@@ -149,8 +149,8 @@ end;
 
 procedure Move_design_up(steps:integer);
 begin
-  for var x:= 0 to tilecount_x-1 do
-  for var y:= steps to tilecount_y-1 do
+  for var x:= 0 to design.tiles_x-1 do
+  for var y:= steps to design.tiles_y-1 do
     begin
       tiles[x,y-steps]:= tiles[x,y];
       tiles[x,y]:= '0';
@@ -163,10 +163,10 @@ var empty_lines: integer;
   procedure Check_up;
   begin
     empty_lines:= 0;
-    for var y:= 0 to tilecount_y-1 do
+    for var y:= 0 to design.tiles_y-1 do
       begin
         var line:= '';
-        for var x:= 0 to tilecount_x-1 do
+        for var x:= 0 to design.tiles_x-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -186,17 +186,17 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         Move_design_up(change);
-        tilecount_y:= tilecount_y - change;
+        design.tiles_y:= design.tiles_y - change;
       end;
   end;
 
   procedure Check_down;
   begin
     empty_lines:= 0;
-    for var y:= tilecount_y-1 downto 0 do
+    for var y:= design.tiles_y-1 downto 0 do
       begin
         var line:= '';
-        for var x:= 0 to tilecount_x-1 do
+        for var x:= 0 to design.tiles_x-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -215,17 +215,17 @@ var empty_lines: integer;
       begin
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
-        tilecount_y:= tilecount_y - change;
+        design.tiles_y:= design.tiles_y - change;
       end;
   end;
 
   procedure Check_left;
   begin
     empty_lines:= 0;
-    for var x:= 0 to tilecount_x-1 do
+    for var x:= 0 to design.tiles_x-1 do
       begin
         var line:= '';
-        for var y:= 0 to tilecount_y-1 do
+        for var y:= 0 to design.tiles_y-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -245,17 +245,17 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         Move_design_left(change);
-        tilecount_x:= tilecount_x - change;
+        design.tiles_x:= design.tiles_x - change;
       end;
   end;
 
   procedure Check_right;
   begin
     empty_lines:= 0;
-    for var x:= tilecount_x-1 downto 0 do
+    for var x:= design.tiles_x-1 downto 0 do
       begin
         var line:= '';
-        for var y:= 0 to tilecount_y-1 do
+        for var y:= 0 to design.tiles_y-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -274,7 +274,7 @@ var empty_lines: integer;
       begin
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
-        tilecount_x:= tilecount_x - change;
+        design.tiles_x:= design.tiles_x - change;
       end;
   end;
 
@@ -284,16 +284,16 @@ begin
   Check_left;
   Check_right;
 
-  var changed:= (SpinBox_room_size_x.Value <> tilecount_x) OR (SpinBox_room_size_y.Value <> tilecount_y);
+  var changed:= (SpinBox_room_size_x.Value <> design.tiles_x) OR (SpinBox_room_size_y.Value <> design.tiles_y);
   if not changed then
     begin
       ShowMessage('Nothing to optimize');
       exit;
     end;
 
-  SpinBox_room_size_x.Value:= tilecount_x;
-  SpinBox_room_size_y.Value:= tilecount_y;
-  SetLength(tiles,tilecount_x,tilecount_y);
+  SpinBox_room_size_x.Value:= design.tiles_x;
+  SpinBox_room_size_y.Value:= design.tiles_y;
+  SetLength(tiles,design.tiles_x,design.tiles_y);
 
   Recalculate_sizing;
   Redraw_grid;
@@ -308,122 +308,9 @@ begin
 end;
 
 procedure TForm1.Redraw_ship_tiles;
-var buffer: TBitmap;
-    FillBrush: TBrush;
-
-  procedure Draw_tile(tile_point: TPoint; tile: TTileType);
-
-    procedure Draw_rect;
-    var tile_color: TAlphaColor;
-    begin
-      var rect:= TRect.Create(
-        tile_point.X*BlockSize,
-        tile_point.Y*BlockSize,
-        (tile_point.X+1)*BlockSize,
-        (tile_point.Y+1)*BlockSize);
-
-      case tile of
-        TTT_Floor:    tile_color:= TAlphaColorRec.LightGray;
-        TTT_Window:   tile_color:= TAlphaColorRec.Cyan;
-        TTT_Airlock:  tile_color:= TAlphaColorRec.Gray;
-      else tile_color:= ColorPanel1.Color;
-      end;
-
-      if outside_view then
-      case tile of
-        TTT_Floor,TTT_Airlock: tile_color:= ColorPanel1.Color;
-      end;
-
-      var FloorBrush:= TBrush.Create(TBrushKind.Solid, tile_color);
-      try
-        buffer.Canvas.DrawRect(rect,1);
-        buffer.Canvas.FillRect(rect,1,FloorBrush);
-
-        if derelict then
-          begin
-            var damage:= Simulate_random_damage;
-            if damage>0 then
-              begin
-                FloorBrush.Color:= Shade_of_black_according_to_damage(damage);
-                buffer.Canvas.FillRect(rect,1,FloorBrush);
-              end;
-          end;
-
-      finally
-        FloorBrush.Free;
-      end;
-    end;
-
-    procedure Draw_triangle(rotation:integer);
-    var points: array[0..7] of TPoint;
-    begin
-      points[0]:= TPoint.Create( tile_point.X*BlockSize,    tile_point.Y*BlockSize);
-      points[1]:= TPoint.Create((tile_point.X+1)*BlockSize, tile_point.Y*BlockSize);
-      points[2]:= TPoint.Create((tile_point.X+1)*BlockSize,(tile_point.Y+1)*BlockSize);
-      points[3]:= TPoint.Create( tile_point.X*BlockSize,   (tile_point.Y+1)*BlockSize);
-      points[4]:= points[0];
-      points[5]:= points[1];
-      points[6]:= points[2];
-      points[7]:= points[3];
-
-      var poly: TPolygon;
-      setLength(poly,3);
-      for var i := rotation to rotation+2 do
-        poly[i-rotation]:= points[i];
-
-      buffer.Canvas.DrawPolygon(poly,1);
-      buffer.Canvas.FillPolygon(poly,1);
-
-      if derelict then
-        begin
-          var damage:= Simulate_random_damage;
-          if damage>0 then
-            begin
-              buffer.Canvas.Fill.Color:= Shade_of_black_according_to_damage(damage);
-              buffer.Canvas.FillPolygon(poly,1);
-            end;
-        end;
-    end;
-
-  begin
-    case tile of
-      TTT_Floor,TTT_Wall,TTT_Window,TTT_Airlock: Draw_rect;
-      TTT_CornerNE: Draw_triangle(0);
-      TTT_CornerSE: Draw_triangle(1);
-      TTT_CornerSW: Draw_triangle(2);
-      TTT_CornerNW: Draw_triangle(3);
-    end;
-  end;
-
-  procedure Draw_tiles_to_buffer;
-  begin
-    buffer.Canvas.BeginScene;
-    buffer.Canvas.Clear(TAlphaColorRec.Null);
-
-    FillBrush:= TBrush.Create(TBrushKind.Solid, ColorPanel1.Color);
-    buffer.Canvas.Fill:= FillBrush;
-    buffer.Canvas.Stroke.Thickness:= 3;
-
-    try
-      for var x:= 0 to tilecount_x-1 do
-      for var y:= 0 to tilecount_y-1 do
-        begin
-          buffer.Canvas.Fill.Color:= ColorPanel1.Color;
-          var tile:= TTileType.CharToTile( tiles[x,y] );
-          if tile=TTileType.TTT_Emptytile then continue;
-          Draw_tile(TPoint.Create(x,y), tile);
-        end;
-
-    finally
-      buffer.Canvas.EndScene;
-      FillBrush.Free;
-    end;
-  end;
-
 begin
-  buffer:= TBitmap.Create(round(Layout1.Width),round(Layout1.Height));
+  var buffer:= Draw_ship_design_on_bitmap(design);
   try
-    Draw_tiles_to_buffer;
     Image_ship_tiles.Bitmap.Assign(buffer);
     //buffer.SaveToFile('test.bmp');
   finally
@@ -442,8 +329,8 @@ end;
 function TForm1.Is_same_tiletype_as_selected(tile_point: TPoint): boolean;
 begin
   result:= false;
-  if tile_point.X>tilecount_x then exit;
-  if tile_point.Y>tilecount_y then exit;
+  if tile_point.X>design.tiles_x then exit;
+  if tile_point.Y>design.tiles_y then exit;
 
   var existing_tile:= tiles[tile_point.x,tile_point.y];
   result:= existing_tile=ComboBox_tiles.itemIndex.ToString;
@@ -460,8 +347,8 @@ procedure TForm1.Paint_tile(tile_point: TPoint);
 begin
   if not painting_tiles then exit;
 
-  if tile_point.X>tilecount_x then exit;
-  if tile_point.Y>tilecount_y then exit;
+  if tile_point.X>design.tiles_x then exit;
+  if tile_point.Y>design.tiles_y then exit;
 
   if Is_same_tiletype_as_selected(tile_point) then
     begin
@@ -483,41 +370,19 @@ end;
 
 procedure TForm1.Clear_tiles;
 begin
-  SetLength(tiles,tilecount_x,tilecount_y);
+  SetLength(tiles,design.tiles_x,design.tiles_y);
 
-  for var x:= 0 to tilecount_x-1 do
-  for var y:= 0 to tilecount_y-1 do
+  for var x:= 0 to design.tiles_x-1 do
+  for var y:= 0 to design.tiles_y-1 do
     tiles[x,y]:= TTileType.TTT_Emptytile.ToChar;
 
   Update_shipCode;
 end;
 
 procedure TForm1.Redraw_grid;
-var buffer: TBitmap;
-
-  procedure Draw_grid_to_buffer;
-  begin
-    with buffer.Canvas do
-      begin
-        BeginScene;
-        Clear(TAlphaColorRec.Null);
-        Stroke.Color:= TAlphaColorRec.White;
-        var opacity:= 0.5;
-
-        for var x:= 1 to tilecount_x-1 do
-          DrawLine(TPointF.Create(X*BlockSize,0),TPointF.Create(X*BlockSize,Height),opacity);
-
-        for var y:= 1 to tilecount_y-1 do
-          DrawLine(TPointF.Create(0,Y*BlockSize),TPointF.Create(Width,Y*BlockSize),opacity);
-
-        EndScene;
-      end;
-  end;
-
 begin
-  buffer:= TBitmap.Create(round(Layout1.Width),round(Layout1.Height));
+  var buffer:= Draw_blueprint_grid_on_bitmap(design);
   try
-    Draw_grid_to_buffer;
     Image_grid.Bitmap.Assign(buffer);
   finally
     buffer.Free;
@@ -527,7 +392,8 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   painting_tiles:= false;
-  derelict:= false;
+  design.derelict:= false;
+  design.color:= TAlphaColorRec.Darkorange;
   Recalculate_sizing;
   Clear_tiles;
   Redraw_grid;
@@ -540,11 +406,14 @@ end;
 
 procedure TForm1.Recalculate_sizing;
 begin
-  tilecount_x:= round(SpinBox_room_size_x.Value);
-  tilecount_y:= round(SpinBox_room_size_y.Value);
+  design.tiles_x:= round(SpinBox_room_size_x.Value);
+  design.tiles_y:= round(SpinBox_room_size_y.Value);
 
-  BlockSize:= round(Layout1.Height / tilecount_y);
-  Layout1.Width:= BlockSize * tilecount_x;
+  BlockSize:= round(Layout1.Height / design.tiles_y);
+  Layout1.Width:= BlockSize * design.tiles_x;
+
+  design.bitmap_width := round(Layout1.Width);
+  design.bitmap_height:= round(Layout1.Height);
 end;
 
 procedure TForm1.FormResize(Sender: TObject);
@@ -568,8 +437,8 @@ begin
     Form1.Clear_tiles;
     Form1.Redraw_grid;
     var index:= 1;
-    for var x := 0 to tilecount_x-1 do
-    for var y := 0 to tilecount_y-1 do
+    for var x := 0 to design.tiles_x-1 do
+    for var y := 0 to design.tiles_y-1 do
       begin
         tiles[x,y]:= input[index];
         inc(index);
@@ -642,8 +511,8 @@ begin
       shipCode:= JSONObject.GetValue<String>('shipCode');
     except
       ShowMessage('Old shipCode format? Trying legacy mode');
-      SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('tilecount_x');
-      SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('tilecount_y');
+      SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('design.tiles_x');
+      SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('design.tiles_y');
       ColorPanel1.color:= StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
       String_to_tiles( JSONObject.GetValue<String>('layout') );
       Redraw_ship_tiles;
@@ -675,7 +544,7 @@ end;
 
 procedure TForm1.Button2Click(Sender: TObject);
 begin
-  derelict:= not derelict;
+  design.derelict:= not design.derelict;
   Redraw_ship_tiles;
 end;
 
@@ -690,21 +559,21 @@ begin
   result:= '';
   try
     // mask: FF= X, FF=Y, FFFFFF=color, remaining characters are shipcode
-    var hex_x:= IntToHex(tilecount_x,2);
-    var hex_y:= IntToHex(tilecount_y,2);
-    var color:= AlphaColorToString(form1.ColorPanel1.color);
+    var hex_x:= IntToHex(design.tiles_x,2);
+    var hex_y:= IntToHex(design.tiles_y,2);
+    var color:= IntToHex(design.color);
     color:= chop(color,'#FF');
 
-    var shipCode: string;
-    for var x := 0 to tilecount_x-1 do
-    for var y := 0 to tilecount_y-1 do
-      shipCode:= shipCode + tiles[x,y];
+    design.layout:= '';
+    for var x := 0 to design.tiles_x-1 do
+    for var y := 0 to design.tiles_y-1 do
+      design.layout:= design.layout + tiles[x,y];
 
     result:=
       hex_x +
       hex_y +
       color +
-      shipCode;
+      design.layout;
 
   except
     ShowMessage('Error saving the layout');
@@ -764,20 +633,20 @@ end;
 
 procedure TForm1.CheckBox_derelictChange(Sender: TObject);
 begin
-  derelict:= CheckBox_derelict.IsChecked;
+  design.derelict:= CheckBox_derelict.IsChecked;
   Redraw_ship_tiles;
 end;
 
 procedure TForm1.CheckBox_outside_viewChange(Sender: TObject);
 begin
-  outside_view:= CheckBox_outside_view.IsChecked;
+  design.outside_view:= CheckBox_outside_view.IsChecked;
   Redraw_ship_tiles;
 end;
 
 procedure TForm1.ColorPanel1Change(Sender: TObject);
 begin
-  var color := ColorPanel1.color;
-  Edit_tile_color.Text := AlphaColorToString(color);
+  design.color := ColorPanel1.color;
+  Edit_tile_color.Text := AlphaColorToString(design.color);
   Redraw_ship_tiles;
 end;
 

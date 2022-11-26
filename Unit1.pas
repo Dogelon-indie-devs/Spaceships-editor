@@ -32,26 +32,9 @@ uses
   FMX.Controls,
   FMX.Controls.Presentation,
 
+  game_classes,
   game_functions,
   ship_graphics;
-
-type TTileType = (
-  TTT_Emptytile = 0,
-  TTT_Floor,
-  TTT_Wall,
-  TTT_CornerNE,
-  TTT_CornerSE,
-  TTT_CornerSW,
-  TTT_CornerNW,
-  TTT_Window,
-  TTT_Airlock
-  );
-TTileTypeHelper = record helper for TTileType
-  function ToChar : char;
-  function ToString : string;
-  class function IndexToChar(index:integer): char; static;
-  class function CharToTile(input: char): TTileType; static;
-end;
 
 type
   TForm1 = class(TForm)
@@ -84,7 +67,6 @@ type
     Image_grid: TImage;
     Button_test: TButton;
     procedure Button_generateClick(Sender: TObject);
-    procedure ComboBox_tilesChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Button_saveClick(Sender: TObject);
     procedure Button_loadClick(Sender: TObject);
@@ -318,7 +300,6 @@ begin
   Redraw_ship_tiles;
 
   ShowMessage('Design optimized, extra rows/columns removed');
-  // unfinished
 end;
 
 procedure TForm1.Button_optimizeClick(Sender: TObject);
@@ -798,46 +779,6 @@ begin
   var color := ColorPanel1.color;
   Edit_tile_color.Text := AlphaColorToString(color);
   Redraw_ship_tiles;
-end;
-
-procedure TForm1.ComboBox_tilesChange(Sender: TObject);
-begin
-end;
-
-{ TTileTypeHelper }
-
-class function TTileTypeHelper.CharToTile(input: char): TTileType;
-begin
-  var str:= string(input);
-  result:= TTileType(str.ToInteger);
-end;
-
-class function TTileTypeHelper.IndexToChar(index:integer): char;
-begin
-  var str:= inttohex(index,1);
-  result:= str[1];
-end;
-
-function TTileTypeHelper.ToChar: char;
-begin
-  var hex:= ord(self);
-  var str:= hex.ToString;
-  result:= str[1];
-end;
-
-function TTileTypeHelper.ToString: string;
-begin
-  case self of
-    TTT_Emptytile:  result:= 'Emptytile';
-    TTT_Floor:      result:= 'Floor';
-    TTT_Wall:       result:= 'Wall';
-    TTT_CornerNE:   result:= 'CornerNE';
-    TTT_CornerSE:   result:= 'CornerSE';
-    TTT_CornerSW:   result:= 'CornerSW';
-    TTT_CornerNW:   result:= 'CornerNW';
-    TTT_Window:     result:= 'Window';
-    TTT_Airlock:    result:= 'Airlock';
-  end;
 end;
 
 end.

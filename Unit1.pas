@@ -139,6 +139,14 @@ begin
     end;
 end;
 
+function Tiles_to_string:string; forward;
+
+function Update_shipCode: string;
+begin
+  result:= Tiles_to_string;
+  form1.Memo_shipcode.Text:= result;
+end;
+
 procedure TForm1.Optimize_grid_size;
 var empty_lines: integer;
 
@@ -280,6 +288,7 @@ begin
   Recalculate_sizing;
   Redraw_grid;
   Redraw_ship_tiles;
+  Update_shipCode;
 
   ShowMessage('Design optimized, extra rows/columns removed');
 end;
@@ -298,14 +307,6 @@ begin
   finally
     buffer.Free;
   end;
-end;
-
-function Tiles_to_string:string; forward;
-
-function Update_shipCode: string;
-begin
-  result:= Tiles_to_string;
-  form1.Memo_shipcode.Text:= result;
 end;
 
 function TForm1.Is_same_tiletype_as_selected(tile_point: TPoint): boolean;
@@ -531,6 +532,8 @@ begin
     var hex_x:= IntToHex(design.tiles_x,2);
     var hex_y:= IntToHex(design.tiles_y,2);
     var color:= IntToHex(design.color);
+    if pos('#',color)=0 then
+      color:= '#'+color;
     color:= chop(color,'#FF');
 
     design.layout:= '';

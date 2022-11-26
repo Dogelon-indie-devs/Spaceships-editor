@@ -82,6 +82,7 @@ type
     SaveDialog2: TSaveDialog;
     Layout1: TLayout;
     Image_grid: TImage;
+    Button_test: TButton;
     procedure Button_generateClick(Sender: TObject);
     procedure ComboBox_tilesChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -99,6 +100,7 @@ type
       Y: Single);
     procedure Image_gridMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
+    procedure Button_testClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -446,17 +448,11 @@ begin
   end;
 end;
 
-function Recalculate_shipCode: string;
-begin
-  result:= '';
-  for var y:= 0 to tilecount_y-1 do
-  for var x:= 0 to tilecount_x-1 do
-    result:= result + tiles[x,y];
-end;
+function Tiles_to_string:string; forward;
 
 function Update_shipCode: string;
 begin
-  result:= Recalculate_shipCode;
+  result:= Tiles_to_string;
   form1.Memo_shipcode.Text:= result;
 end;
 
@@ -631,16 +627,42 @@ begin
 end;
 
 procedure TForm1.Import_layout_as_json(json:string);
+var shipCode: string;
 begin
   var JSONObject := TJSONObject.ParseJSONValue(json);
   try
     Edit_ship_class_name.Text:= JSONObject.GetValue<String>('ship_class_name');
     Edit_author.Text:= JSONObject.GetValue<String>('author');
-    SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('tilecount_x');
-    SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('tilecount_y');
-    ColorPanel1.color:= StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
-    String_to_tiles( JSONObject.GetValue<String>('layout') );
-    Redraw_ship_tiles;
+
+    try
+      shipCode:= JSONObject.GetValue<String>('shipCode');
+    except
+      ShowMessage('Old shipCode format? Trying legacy mode');
+      SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('tilecount_x');
+      SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('tilecount_y');
+      ColorPanel1.color:= StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
+      String_to_tiles( JSONObject.GetValue<String>('layout') );
+      Redraw_ship_tiles;
+      exit;
+    end;
+
+    // mask: FF= X, FF=Y, FFFFFF=color, remaining characters are shipcode
+    Insert(',',shipCode,11);
+    Insert(',',shipCode,5);
+    Insert(',',shipCode,3);
+
+    var list:= TStringList.Create;
+    try
+      list.DelimitedText:= shipCode;
+      SpinBox_room_size_x.Value:= StrToInt( '$' +list[0] );
+      SpinBox_room_size_y.Value:= StrToInt( '$' +list[1] );
+      ColorPanel1.color:= StringToAlphaColor( '#FF'+list[2] );
+      String_to_tiles(list[3]);
+      Redraw_ship_tiles;
+
+    finally
+      list.Free;
+    end;
 
   finally
     JSONObject.Free;
@@ -663,9 +685,22 @@ function Tiles_to_string: string;
 begin
   result:= '';
   try
+    // mask: FF= X, FF=Y, FFFFFF=color, remaining characters are shipcode
+    var hex_x:= IntToHex(tilecount_x,2);
+    var hex_y:= IntToHex(tilecount_y,2);
+    var color:= AlphaColorToString(form1.ColorPanel1.color);
+    color:= chop(color,'#FF');
+
+    var shipCode: string;
     for var x := 0 to tilecount_x-1 do
     for var y := 0 to tilecount_y-1 do
-      result:= result + tiles[x,y];
+      shipCode:= shipCode + tiles[x,y];
+
+    result:=
+      hex_x +
+      hex_y +
+      color +
+      shipCode;
 
   except
     ShowMessage('Error saving the layout');
@@ -679,10 +714,7 @@ begin
     try
       JSONObject.AddPair('ship_class_name',Form1.Edit_ship_class_name.Text);
       JSONObject.AddPair('author',form1.Edit_author.Text);
-      JSONObject.AddPair('hull_color',AlphaColorToString(form1.ColorPanel1.color));
-      JSONObject.AddPair('tilecount_x',tilecount_x);
-      JSONObject.AddPair('tilecount_y',tilecount_y);
-      JSONObject.AddPair('layout',Tiles_to_string);
+      JSONObject.AddPair('shipCode',Tiles_to_string);
 
     except
       ShowMessage('Error saving the data into json');
@@ -719,6 +751,11 @@ begin
 
   if SaveDialog2.Execute then
     Image_ship_tiles.MakeScreenshot.SaveToFile(SaveDialog2.FileName);
+end;
+
+procedure TForm1.Button_testClick(Sender: TObject);
+begin
+  Tiles_to_string;
 end;
 
 procedure TForm1.CheckBox_derelictChange(Sender: TObject);

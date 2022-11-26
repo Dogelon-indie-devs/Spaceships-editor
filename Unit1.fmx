@@ -255,6 +255,13 @@ object Form1: TForm1
         Text = 'outside view'
         OnChange = CheckBox_outside_viewChange
       end
+      object Button_test: TButton
+        Position.X = 126.000000000000000000
+        Position.Y = 312.000000000000000000
+        TabOrder = 43
+        Text = 'Button_test'
+        OnClick = Button_testClick
+      end
     end
     object GroupBox3: TGroupBox
       Align = Client

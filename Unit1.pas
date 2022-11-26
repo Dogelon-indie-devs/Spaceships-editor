@@ -113,24 +113,6 @@ implementation
 
 {$R *.fmx}
 
-function Simulate_random_damage: integer;
-const
-  damage_stages = 21;
-  minimum_damage= 1;
-  step = 5;
-begin
-  // returns damage range 5 - 100
-  result:= (random(damage_stages-minimum_damage)+minimum_damage) * step;
-end;
-
-function Shade_of_black_according_to_damage(damage:integer): TAlphaColor;
-begin
-  var inputColor:= TAlphaColorRec.Black;
-  // inverse to damage, doubled to use range 10 - 200 alpha value
-  TAlphaColorRec(inputColor).A:= 256 - (damage*2);
-  result:= inputColor;
-end;
-
 function Randomize_color_alpha(inputColor: TAlphaColor): TAlphaColor;
 begin
   TAlphaColorRec(inputColor).A:= random(256);
@@ -444,6 +426,7 @@ begin
         inc(index);
       end;
 
+    design.layout:= input;
     form1.Memo_shipcode.Text:= input;
 
   except
@@ -509,33 +492,19 @@ begin
 
     try
       shipCode:= JSONObject.GetValue<String>('shipCode');
+      design:= Decompile_shipcode_into_design(shipCode);
     except
       ShowMessage('Old shipCode format? Trying legacy mode');
-      SpinBox_room_size_x.Value:= JSONObject.GetValue<Integer>('design.tiles_x');
-      SpinBox_room_size_y.Value:= JSONObject.GetValue<Integer>('design.tiles_y');
-      ColorPanel1.color:= StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
-      String_to_tiles( JSONObject.GetValue<String>('layout') );
-      Redraw_ship_tiles;
-      exit;
+      design.tiles_x:= JSONObject.GetValue<Integer>('tilecount_x');
+      design.tiles_y:= JSONObject.GetValue<Integer>('tilecount_y');
+      design.color:=   StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
+      design.layout:=  JSONObject.GetValue<String>('layout');
     end;
 
-    // mask: FF= X, FF=Y, FFFFFF=color, remaining characters are shipcode
-    Insert(',',shipCode,11);
-    Insert(',',shipCode,5);
-    Insert(',',shipCode,3);
-
-    var list:= TStringList.Create;
-    try
-      list.DelimitedText:= shipCode;
-      SpinBox_room_size_x.Value:= StrToInt( '$' +list[0] );
-      SpinBox_room_size_y.Value:= StrToInt( '$' +list[1] );
-      ColorPanel1.color:= StringToAlphaColor( '#FF'+list[2] );
-      String_to_tiles(list[3]);
-      Redraw_ship_tiles;
-
-    finally
-      list.Free;
-    end;
+    SpinBox_room_size_x.Value:= design.tiles_x;
+    SpinBox_room_size_y.Value:= design.tiles_y;
+    String_to_tiles( design.layout );
+    ColorPanel1.color:= design.color;
 
   finally
     JSONObject.Free;

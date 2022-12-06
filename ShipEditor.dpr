@@ -7,7 +7,8 @@ uses
   game_functions in '..\spaceships-shared\game_functions.pas',
   game_classes in '..\spaceships-shared\game_classes.pas',
   game_consts in '..\spaceships-shared\game_consts.pas',
-  ship_graphics in '..\spaceships-shared\ship_graphics.pas';
+  ship_graphics in '..\spaceships-shared\ship_graphics.pas',
+  ship_defaults in '..\spaceships-shared\ship_defaults.pas';
 
 {$R *.res}
 

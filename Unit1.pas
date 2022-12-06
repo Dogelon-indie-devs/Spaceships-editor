@@ -427,7 +427,7 @@ begin
         inc(index);
       end;
 
-    design.layout:= input;
+    design.shipcode:= input;
     form1.Memo_shipcode.Text:= input;
 
   except
@@ -499,12 +499,12 @@ begin
       design.tiles_x:= JSONObject.GetValue<Integer>('tilecount_x');
       design.tiles_y:= JSONObject.GetValue<Integer>('tilecount_y');
       design.color:=   StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
-      design.layout:=  JSONObject.GetValue<String>('layout');
+      design.shipcode:=  JSONObject.GetValue<String>('layout');
     end;
 
     SpinBox_room_size_x.Value:= design.tiles_x;
     SpinBox_room_size_y.Value:= design.tiles_y;
-    String_to_tiles( design.layout );
+    String_to_tiles( design.shipcode );
     ColorPanel1.color:= design.color;
 
   finally
@@ -536,16 +536,16 @@ begin
       color:= '#'+color;
     color:= chop(color,'#FF');
 
-    design.layout:= '';
+    design.shipcode:= '';
     for var x := 0 to design.tiles_x-1 do
     for var y := 0 to design.tiles_y-1 do
-      design.layout:= design.layout + tiles[x,y];
+      design.shipcode:= design.shipcode + tiles[x,y];
 
     result:=
       hex_x +
       hex_y +
       color +
-      design.layout;
+      design.shipcode;
 
   except
     ShowMessage('Error saving the layout');

@@ -284,6 +284,7 @@
         <DCCReference Include="..\spaceships-shared\game_classes.pas"/>
         <DCCReference Include="..\spaceships-shared\game_consts.pas"/>
         <DCCReference Include="..\spaceships-shared\ship_graphics.pas"/>
+        <DCCReference Include="..\spaceships-shared\ship_defaults.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

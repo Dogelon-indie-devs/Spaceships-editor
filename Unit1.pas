@@ -60,7 +60,7 @@ type
     Edit_ship_class_name: TEdit;
     ColorPanel1: TColorPanel;
     CheckBox_derelict: TCheckBox;
-    CheckBox_outside_view: TCheckBox;
+    CheckBox_interior_view: TCheckBox;
     Button_optimize: TButton;
     SaveDialog2: TSaveDialog;
     Layout1: TLayout;
@@ -74,7 +74,7 @@ type
     procedure Button2Click(Sender: TObject);
     procedure ColorPanel1Change(Sender: TObject);
     procedure CheckBox_derelictChange(Sender: TObject);
-    procedure CheckBox_outside_viewChange(Sender: TObject);
+    procedure CheckBox_interior_viewChange(Sender: TObject);
     procedure Button_optimizeClick(Sender: TObject);
     procedure Image_gridMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
@@ -609,9 +609,9 @@ begin
   Redraw_ship_tiles;
 end;
 
-procedure TForm1.CheckBox_outside_viewChange(Sender: TObject);
+procedure TForm1.CheckBox_interior_viewChange(Sender: TObject);
 begin
-  design.outside_view:= CheckBox_outside_view.IsChecked;
+  design.interior_view:= CheckBox_interior_view.IsChecked;
   Redraw_ship_tiles;
 end;
 

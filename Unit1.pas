@@ -416,6 +416,20 @@ end;
 procedure String_to_tiles(input:string);
 begin
   try
+    var expected_shipcode_length:= design.tiles_x * design.tiles_y;
+    var actual_length:= input.Length;
+
+    if actual_length = expected_shipcode_length -1 then
+      begin
+        // old shipcode format without weapon
+        input:= '0'+input;
+      end
+    else
+      Raise Exception.Create(
+        'Expected shipcode length: '+expected_shipcode_length.ToString+
+        ', received: '+actual_length.ToString
+        );
+
     Form1.Recalculate_sizing;
     Form1.Clear_tiles;
     Form1.Redraw_grid;

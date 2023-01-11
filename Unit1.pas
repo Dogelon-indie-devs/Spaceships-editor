@@ -552,6 +552,7 @@ begin
     if pos('#',color)=0 then
       color:= '#'+color;
     color:= chop(color,'#FF');
+    var weapon:= '0';
 
     design.shipcode:= '';
     for var x := 0 to design.tiles_x-1 do
@@ -562,6 +563,7 @@ begin
       hex_x +
       hex_y +
       color +
+      weapon +
       design.shipcode;
 
   except

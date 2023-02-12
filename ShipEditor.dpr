@@ -9,7 +9,8 @@ uses
   ship_graphics in '..\spaceships-shared\ship_graphics.pas',
   game_consts in '..\spaceships-shared\game_consts.pas',
   ship_defaults in '..\spaceships-shared\ship_defaults.pas',
-  game_ships in '..\spaceships-shared\game_ships.pas';
+  game_ships in '..\spaceships-shared\game_ships.pas',
+  ship_design in '..\spaceships-shared\ship_design.pas';
 
 {$R *.res}
 

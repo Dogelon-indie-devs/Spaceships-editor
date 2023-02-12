@@ -33,6 +33,8 @@ uses
   FMX.Controls.Presentation,
 
   game_classes,
+  ship_design,
+  ship_defaults,
   game_functions,
   ship_graphics;
 
@@ -85,6 +87,7 @@ type
     procedure Button_testClick(Sender: TObject);
     procedure Image_gridMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; var Handled: Boolean);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
   public
@@ -103,7 +106,7 @@ type
 var
   Form1: TForm1;
   fDown: TPointF;
-  design: ShipDesignRec;
+  design: TShipDesign;
   painting_tiles: boolean;
   tiles: array of array of char;
   previous_shipCode: string;
@@ -121,8 +124,8 @@ end;
 
 procedure Move_design_left(steps:integer);
 begin
-  for var y:= 0 to design.tiles_y-1 do
-  for var x:= steps to design.tiles_x-1 do
+  for var y:= 0 to design.tileCount_Y-1 do
+  for var x:= steps to design.tileCount_X-1 do
     begin
       tiles[x-steps,y]:= tiles[x,y];
       tiles[x,y]:= '0';
@@ -131,19 +134,19 @@ end;
 
 procedure Move_design_up(steps:integer);
 begin
-  for var x:= 0 to design.tiles_x-1 do
-  for var y:= steps to design.tiles_y-1 do
+  for var x:= 0 to design.tileCount_X-1 do
+  for var y:= steps to design.tileCount_Y-1 do
     begin
       tiles[x,y-steps]:= tiles[x,y];
       tiles[x,y]:= '0';
     end;
 end;
 
-function Tiles_to_string:string; forward;
+//function Tiles_to_string:string; forward;
 
 function Update_shipCode: string;
 begin
-  result:= Tiles_to_string;
+  result:= Design.Recompile_into_ShipCode; //Tiles_to_string;
   form1.Memo_shipcode.Text:= result;
 end;
 
@@ -153,10 +156,10 @@ var empty_lines: integer;
   procedure Check_up;
   begin
     empty_lines:= 0;
-    for var y:= 0 to design.tiles_y-1 do
+    for var y:= 0 to design.tileCount_Y-1 do
       begin
         var line:= '';
-        for var x:= 0 to design.tiles_x-1 do
+        for var x:= 0 to design.tileCount_X-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -176,17 +179,17 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         Move_design_up(change);
-        design.tiles_y:= design.tiles_y - change;
+        design.tileCount_Y:= design.tileCount_Y - change;
       end;
   end;
 
   procedure Check_down;
   begin
     empty_lines:= 0;
-    for var y:= design.tiles_y-1 downto 0 do
+    for var y:= design.tileCount_Y-1 downto 0 do
       begin
         var line:= '';
-        for var x:= 0 to design.tiles_x-1 do
+        for var x:= 0 to design.tileCount_X-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -205,17 +208,17 @@ var empty_lines: integer;
       begin
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
-        design.tiles_y:= design.tiles_y - change;
+        design.tileCount_Y:= design.tileCount_X - change;
       end;
   end;
 
   procedure Check_left;
   begin
     empty_lines:= 0;
-    for var x:= 0 to design.tiles_x-1 do
+    for var x:= 0 to design.tileCount_X-1 do
       begin
         var line:= '';
-        for var y:= 0 to design.tiles_y-1 do
+        for var y:= 0 to design.tileCount_Y-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -235,17 +238,17 @@ var empty_lines: integer;
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
         Move_design_left(change);
-        design.tiles_x:= design.tiles_x - change;
+        design.tileCount_X:= design.tileCount_X - change;
       end;
   end;
 
   procedure Check_right;
   begin
     empty_lines:= 0;
-    for var x:= design.tiles_x-1 downto 0 do
+    for var x:= design.tileCount_X-1 downto 0 do
       begin
         var line:= '';
-        for var y:= 0 to design.tiles_y-1 do
+        for var y:= 0 to design.tileCount_Y-1 do
           begin
             var tile:= tiles[x,y];
             if tile='0' then
@@ -264,7 +267,7 @@ var empty_lines: integer;
       begin
         const keep_one_line_empty = 1;
         var change:= empty_lines - keep_one_line_empty;
-        design.tiles_x:= design.tiles_x - change;
+        design.tileCount_X:= design.tileCount_X - change;
       end;
   end;
 
@@ -274,16 +277,16 @@ begin
   Check_left;
   Check_right;
 
-  var changed:= (SpinBox_room_size_x.Value <> design.tiles_x) OR (SpinBox_room_size_y.Value <> design.tiles_y);
+  var changed:= (SpinBox_room_size_x.Value <> design.tileCount_X) OR (SpinBox_room_size_y.Value <> design.tileCount_X);
   if not changed then
     begin
       ShowMessage('Nothing to optimize');
       exit;
     end;
 
-  SpinBox_room_size_x.Value:= design.tiles_x;
-  SpinBox_room_size_y.Value:= design.tiles_y;
-  SetLength(tiles,design.tiles_x,design.tiles_y);
+  SpinBox_room_size_x.Value:= design.tileCount_X;
+  SpinBox_room_size_y.Value:= design.tileCount_Y;
+  SetLength(tiles,design.tileCount_X,design.tileCount_Y);
 
   Recalculate_sizing;
   Redraw_grid;
@@ -312,8 +315,8 @@ end;
 function TForm1.Is_same_tiletype_as_selected(tile_point: TPoint): boolean;
 begin
   result:= false;
-  if tile_point.X>design.tiles_x then exit;
-  if tile_point.Y>design.tiles_y then exit;
+  if tile_point.X>design.tileCount_X then exit;
+  if tile_point.Y>design.tileCount_Y then exit;
 
   var existing_tile:= tiles[tile_point.x,tile_point.y];
   result:= existing_tile=ComboBox_tiles.itemIndex.ToString;
@@ -330,8 +333,8 @@ procedure TForm1.Paint_tile(tile_point: TPoint);
 begin
   if not painting_tiles then exit;
 
-  if tile_point.X>design.tiles_x then exit;
-  if tile_point.Y>design.tiles_y then exit;
+  if tile_point.X>design.tileCount_X then exit;
+  if tile_point.Y>design.tileCount_Y then exit;
 
   if Is_same_tiletype_as_selected(tile_point) then
     begin
@@ -353,10 +356,10 @@ end;
 
 procedure TForm1.Clear_tiles;
 begin
-  SetLength(tiles,design.tiles_x,design.tiles_y);
+  SetLength(tiles,design.tileCount_X,design.tileCount_Y);
 
-  for var x:= 0 to design.tiles_x-1 do
-  for var y:= 0 to design.tiles_y-1 do
+  for var x:= 0 to design.tileCount_X-1 do
+  for var y:= 0 to design.tileCount_Y-1 do
     tiles[x,y]:= TTileType.TTT_Emptytile.ToChar;
 
   Update_shipCode;
@@ -375,8 +378,10 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   painting_tiles:= false;
+  design := TShipDesign.Create('0A0AFF8C0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
   design.derelict:= false;
-  design.color:= TAlphaColorRec.Darkorange;
+  design.Set_BaseColor(TAlphaColorRec.Darkorange);
+
   Recalculate_sizing;
   Clear_tiles;
   Redraw_grid;
@@ -387,13 +392,19 @@ begin
   ComboBox_tiles.ItemIndex:= 2;
 end;
 
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  if Assigned(design) then
+    design.Free;
+end;
+
 procedure TForm1.Recalculate_sizing;
 begin
-  design.tiles_x:= round(SpinBox_room_size_x.Value);
-  design.tiles_y:= round(SpinBox_room_size_y.Value);
+  design.tileCount_X:= round(SpinBox_room_size_x.Value);
+  design.tileCount_Y:= round(SpinBox_room_size_y.Value);
 
-  BlockSize:= round(Layout1.Height / design.tiles_y);
-  Layout1.Width:= BlockSize * design.tiles_x;
+  BlockSize:= round(Layout1.Height / design.tileCount_Y);
+  Layout1.Width:= BlockSize * design.tileCount_X;
 
   design.bitmap_width := round(Layout1.Width);
   design.bitmap_height:= round(Layout1.Height);
@@ -416,7 +427,7 @@ end;
 procedure String_to_tiles(input:string);
 begin
   try
-    var expected_shipcode_length:= design.tiles_x * design.tiles_y;
+    var expected_shipcode_length:= design.tileCount_X * design.tileCount_Y;
     var actual_length:= input.Length;
 
     if actual_length <> expected_shipcode_length then
@@ -437,14 +448,14 @@ begin
     Form1.Clear_tiles;
     Form1.Redraw_grid;
     var index:= 1;
-    for var x := 0 to design.tiles_x-1 do
-    for var y := 0 to design.tiles_y-1 do
+    for var x := 0 to design.tileCount_X-1 do
+    for var y := 0 to design.tileCount_Y-1 do
       begin
         tiles[x,y]:= input[index];
         inc(index);
       end;
 
-    design.shipcode:= input;
+    //design.shipcode:= input;
     form1.Memo_shipcode.Text:= input;
 
   except
@@ -510,19 +521,24 @@ begin
 
     try
       shipCode:= JSONObject.GetValue<String>('shipCode');
-      design:= Decompile_shipcode_into_design(shipCode);
+      if Assigned(design) then
+        begin
+          design.Free;
+          design:= TShipDesign.Create(shipCode); //Decompile_shipcode_into_design(shipCode);
+        end;
     except
       ShowMessage('Old shipCode format? Trying legacy mode');
-      design.tiles_x:= JSONObject.GetValue<Integer>('tilecount_x');
-      design.tiles_y:= JSONObject.GetValue<Integer>('tilecount_y');
-      design.color:=   StringToAlphaColor( JSONObject.GetValue<String>('hull_color') );
-      design.shipcode:=  JSONObject.GetValue<String>('layout');
+      design.tileCount_X:= JSONObject.GetValue<Integer>('tilecount_x');
+      design.tileCount_Y:= JSONObject.GetValue<Integer>('tilecount_y');
+      design.Set_BaseColor(StringToAlphaColor( JSONObject.GetValue<String>('hull_color') ));
+      //design.shipcode:=  JSONObject.GetValue<String>('layout');
     end;
 
-    SpinBox_room_size_x.Value:= design.tiles_x;
-    SpinBox_room_size_y.Value:= design.tiles_y;
-    String_to_tiles( design.shipcode );
-    ColorPanel1.color:= design.color;
+    SpinBox_room_size_x.Value:= design.tileCount_X;
+    SpinBox_room_size_y.Value:= design.tileCount_Y;
+    String_to_tiles( design.Recompile_into_ShipCode );
+
+    ColorPanel1.Color := design.BaseColor;
 
   finally
     JSONObject.Free;
@@ -541,22 +557,22 @@ begin
     Import_layout_as_json( FileToString(OpenDialog1.FileName) );
 end;
 
-function Tiles_to_string: string;
+{function Tiles_to_string: string;
 begin
   result:= '';
   try
     // mask: FF= X, FF=Y, FFFFFF=color, remaining characters are shipcode
-    var hex_x:= IntToHex(design.tiles_x,2);
-    var hex_y:= IntToHex(design.tiles_y,2);
-    var color:= IntToHex(design.color);
+    var hex_x:= IntToHex(design.tileCount_X,2);
+    var hex_y:= IntToHex(design.tileCount_Y,2);
+    var color:= IntToHex(design.PaletteColors[0]);
     if pos('#',color)=0 then
       color:= '#'+color;
     color:= chop(color,'#FF');
     var weapon:= '0';
 
     design.shipcode:= '';
-    for var x := 0 to design.tiles_x-1 do
-    for var y := 0 to design.tiles_y-1 do
+    for var x := 0 to design.tileCount_X-1 do
+    for var y := 0 to design.tileCount_Y-1 do
       design.shipcode:= design.shipcode + tiles[x,y];
 
     result:=
@@ -569,7 +585,7 @@ begin
   except
     ShowMessage('Error saving the layout');
   end;
-end;
+end;}
 
 function Export_layout_as_json: string;
 begin
@@ -578,7 +594,7 @@ begin
     try
       JSONObject.AddPair('ship_class_name',Form1.Edit_ship_class_name.Text);
       JSONObject.AddPair('author',form1.Edit_author.Text);
-      JSONObject.AddPair('shipCode',Tiles_to_string);
+      JSONObject.AddPair('shipCode', Design.Recompile_into_ShipCode);
 
     except
       ShowMessage('Error saving the data into json');
@@ -619,7 +635,7 @@ end;
 
 procedure TForm1.Button_testClick(Sender: TObject);
 begin
-  Tiles_to_string;
+  Design.Recompile_into_ShipCode;
 end;
 
 procedure TForm1.CheckBox_derelictChange(Sender: TObject);
@@ -636,8 +652,8 @@ end;
 
 procedure TForm1.ColorPanel1Change(Sender: TObject);
 begin
-  design.color := ColorPanel1.color;
-  Edit_tile_color.Text := AlphaColorToString(design.color);
+  design.Set_BaseColor(ColorPanel1.color);
+  Edit_tile_color.Text := AlphaColorToString(design.BaseColor);
   Redraw_ship_tiles;
 end;
 

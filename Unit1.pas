@@ -360,7 +360,7 @@ begin
 
   for var x:= 0 to design.tileCount_X-1 do
   for var y:= 0 to design.tileCount_Y-1 do
-    tiles[x,y]:= TTileType.TTT_Emptytile.ToChar;
+    tiles[x,y]:= TTileType.ttEmptytile.ToChar;
 
   Update_shipCode;
 end;

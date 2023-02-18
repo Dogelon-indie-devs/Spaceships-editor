@@ -108,7 +108,6 @@ var
   fDown: TPointF;
   design: TShipDesign;
   painting_tiles: boolean;
-  tiles: array of array of char;
   previous_shipCode: string;
   BlockSize: integer;
 
@@ -127,8 +126,8 @@ begin
   for var y:= 0 to design.tileCount_Y-1 do
   for var x:= steps to design.tileCount_X-1 do
     begin
-      tiles[x-steps,y]:= tiles[x,y];
-      tiles[x,y]:= '0';
+      Design.tiles[x-steps,y]:= Design.tiles[x,y];
+      Design.tiles[x,y]:= '0';
     end;
 end;
 
@@ -137,8 +136,8 @@ begin
   for var x:= 0 to design.tileCount_X-1 do
   for var y:= steps to design.tileCount_Y-1 do
     begin
-      tiles[x,y-steps]:= tiles[x,y];
-      tiles[x,y]:= '0';
+      Design.tiles[x,y-steps]:= Design.tiles[x,y];
+      Design.tiles[x,y]:= '0';
     end;
 end;
 
@@ -161,7 +160,7 @@ var empty_lines: integer;
         var line:= '';
         for var x:= 0 to design.tileCount_X-1 do
           begin
-            var tile:= tiles[x,y];
+            var tile:= Design.tiles[x,y];
             if tile='0' then
               continue
             else
@@ -191,7 +190,7 @@ var empty_lines: integer;
         var line:= '';
         for var x:= 0 to design.tileCount_X-1 do
           begin
-            var tile:= tiles[x,y];
+            var tile:= Design.tiles[x,y];
             if tile='0' then
               continue
             else
@@ -220,7 +219,7 @@ var empty_lines: integer;
         var line:= '';
         for var y:= 0 to design.tileCount_Y-1 do
           begin
-            var tile:= tiles[x,y];
+            var tile:= Design.tiles[x,y];
             if tile='0' then
               continue
             else
@@ -250,7 +249,7 @@ var empty_lines: integer;
         var line:= '';
         for var y:= 0 to design.tileCount_Y-1 do
           begin
-            var tile:= tiles[x,y];
+            var tile:= Design.tiles[x,y];
             if tile='0' then
               continue
             else
@@ -286,7 +285,7 @@ begin
 
   SpinBox_room_size_x.Value:= design.tileCount_X;
   SpinBox_room_size_y.Value:= design.tileCount_Y;
-  SetLength(tiles,design.tileCount_X,design.tileCount_Y);
+  SetLength(Design.tiles,design.tileCount_X,design.tileCount_Y);
 
   Recalculate_sizing;
   Redraw_grid;
@@ -318,7 +317,7 @@ begin
   if tile_point.X>design.tileCount_X then exit;
   if tile_point.Y>design.tileCount_Y then exit;
 
-  var existing_tile:= tiles[tile_point.x,tile_point.y];
+  var existing_tile:= Design.tiles[tile_point.x,tile_point.y];
   result:= existing_tile=ComboBox_tiles.itemIndex.ToString;
 end;
 
@@ -343,7 +342,7 @@ begin
   else
     begin
       var selected_tile_type:= TTileType.IndexToChar(ComboBox_tiles.ItemIndex);
-      tiles[tile_point.x,tile_point.y]:= selected_tile_type;
+      Design.tiles[tile_point.x,tile_point.y]:= selected_tile_type;
     end;
 
   var newCode:= Update_shipCode;
@@ -356,11 +355,11 @@ end;
 
 procedure TForm1.Clear_tiles;
 begin
-  SetLength(tiles,design.tileCount_X,design.tileCount_Y);
+  SetLength(Design.tiles,design.tileCount_X,design.tileCount_Y);
 
   for var x:= 0 to design.tileCount_X-1 do
   for var y:= 0 to design.tileCount_Y-1 do
-    tiles[x,y]:= TTileType.ttEmptytile.ToChar;
+    Design.tiles[x,y]:= TTileType.ttEmptytile.ToChar;
 
   Update_shipCode;
 end;
@@ -420,8 +419,10 @@ end;
 procedure TForm1.Button_generateClick(Sender: TObject);
 begin
   Recalculate_sizing;
-  Clear_tiles;
+  design.Clear_arrays;
   Redraw_grid;
+  Redraw_ship_tiles;
+  Self.Resize;
 end;
 
 procedure String_to_tiles(input:string);
@@ -451,7 +452,7 @@ begin
     for var x := 0 to design.tileCount_X-1 do
     for var y := 0 to design.tileCount_Y-1 do
       begin
-        tiles[x,y]:= input[index];
+        Design.tiles[x,y]:= input[index];
         inc(index);
       end;
 

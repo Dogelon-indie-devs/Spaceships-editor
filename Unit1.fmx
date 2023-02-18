@@ -109,6 +109,7 @@ object Form1: TForm1
         Cursor = crIBeam
         DecimalDigits = 0
         Min = 3.000000000000000000
+        Max = 101.000000000000000000
         Value = 10.000000000000000000
         Position.X = 16.000000000000000000
         Position.Y = 24.000000000000000000
@@ -132,6 +133,7 @@ object Form1: TForm1
         Cursor = crIBeam
         DecimalDigits = 0
         Min = 3.000000000000000000
+        Max = 101.000000000000000000
         Value = 10.000000000000000000
         Position.X = 96.000000000000000000
         Position.Y = 24.000000000000000000

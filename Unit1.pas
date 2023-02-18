@@ -431,7 +431,7 @@ begin
     var expected_shipcode_length:= design.tileCount_X * design.tileCount_Y;
     var actual_length:= input.Length;
 
-    if actual_length <> expected_shipcode_length then
+   { if actual_length <> expected_shipcode_length then
       begin
         if actual_length = expected_shipcode_length -1 then
           begin
@@ -443,9 +443,15 @@ begin
             'Expected shipcode length: '+expected_shipcode_length.ToString+
             ', received: '+actual_length.ToString
             );
-      end;
+      end; }
 
     Form1.Recalculate_sizing;
+    //design.Clear_arrays;
+    Form1.Redraw_grid;
+    Form1.Redraw_ship_tiles;
+    Form1.Resize;
+
+  {  Form1.Recalculate_sizing;
     Form1.Clear_tiles;
     Form1.Redraw_grid;
     var index:= 1;
@@ -457,7 +463,7 @@ begin
       end;
 
     //design.shipcode:= input;
-    form1.Memo_shipcode.Text:= input;
+    form1.Memo_shipcode.Text:= input;  }
 
   except
     ShowMessage('Error loading the layout');
@@ -526,6 +532,7 @@ begin
         begin
           design.Free;
           design:= TShipDesign.Create(shipCode); //Decompile_shipcode_into_design(shipCode);
+          Memo_shipcode.Text := design.Recompile_into_ShipCode;
         end;
     except
       ShowMessage('Old shipCode format? Trying legacy mode');
@@ -539,7 +546,7 @@ begin
     SpinBox_room_size_y.Value:= design.tileCount_Y;
     String_to_tiles( design.Recompile_into_ShipCode );
 
-    ColorPanel1.Color := design.BaseColor;
+  //  ColorPanel1.Color := design.BaseColor;
 
   finally
     JSONObject.Free;
